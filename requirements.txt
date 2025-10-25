@@ -1,0 +1,10 @@
+# mblog 工具本身的依赖
+# 
+# mblog 是一个脚手架生成工具，它本身不需要运行时依赖。
+# 它只负责创建项目结构和复制模板文件。
+# 
+# 生成的博客项目会有自己的 requirements.txt 文件，
+# 其中包含运行时所需的依赖（markdown, Jinja2, python-frontmatter 等）。
+# 
+# 如果需要开发 mblog 工具本身，请安装开发依赖：
+# pip install -e ".[dev]"

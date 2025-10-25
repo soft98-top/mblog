@@ -1,0 +1,144 @@
+---
+title: "欢迎使用 mblog"
+date: 2025-10-23
+tags: ["博客", "教程"]
+author: "博客作者"
+description: "这是你的第一篇博客文章，介绍了如何使用 mblog 创建和管理博客"
+---
+
+# 欢迎使用 mblog
+
+恭喜你！你已经成功创建了一个 mblog 博客项目。这篇文章将帮助你快速了解如何使用 mblog。
+
+## 什么是 mblog？
+
+mblog 是一个简单而强大的静态博客生成器，它可以将你的 Markdown 文章转换为精美的静态网站。
+
+### 主要特性
+
+- **简单易用**：使用 Markdown 编写文章
+- **主题系统**：支持自定义主题
+- **自动部署**：内置 GitHub Actions 配置
+- **完全独立**：生成的项目不依赖 mblog 工具
+
+## 如何开始写作？
+
+1. 在 `md/` 目录下创建新的 Markdown 文件
+2. 添加 frontmatter 元数据（标题、日期、标签等）
+3. 使用 Markdown 语法编写文章内容
+4. 运行 `python gen.py` 生成静态文件
+
+### Frontmatter 示例
+
+每篇文章都需要在开头包含 YAML 格式的 frontmatter：
+
+```yaml
+---
+title: "文章标题"
+date: 2025-10-23
+tags: ["标签1", "标签2"]
+author: "作者名"
+description: "文章简介"
+---
+```
+
+## Markdown 语法示例
+
+### 标题
+
+使用 `#` 符号创建标题，支持 1-6 级标题。
+
+### 列表
+
+无序列表：
+
+- 项目 1
+- 项目 2
+  - 子项目 2.1
+  - 子项目 2.2
+- 项目 3
+
+有序列表：
+
+1. 第一步
+2. 第二步
+3. 第三步
+
+### 代码块
+
+行内代码：`print("Hello, World!")`
+
+代码块：
+
+```python
+def hello_world():
+    """打印 Hello World"""
+    print("Hello, World!")
+    
+if __name__ == "__main__":
+    hello_world()
+```
+
+### 引用
+
+> 这是一段引用文字。
+> 
+> 可以包含多行内容。
+
+### 链接和图片
+
+链接：[mblog 文档](https://example.com)
+
+图片：![示例图片](https://via.placeholder.com/600x400)
+
+### 表格
+
+| 功能 | 描述 | 状态 |
+|------|------|------|
+| Markdown 支持 | 完整的 Markdown 语法 | ✓ |
+| 主题系统 | 可自定义主题 | ✓ |
+| 自动部署 | GitHub Actions | ✓ |
+
+### 强调
+
+**粗体文字** 和 *斜体文字* 以及 ~~删除线~~。
+
+### 分隔线
+
+---
+
+## 生成静态文件
+
+在项目根目录运行：
+
+```bash
+python gen.py
+```
+
+生成的静态文件将保存在 `public/` 目录中。
+
+## 部署到 GitHub Pages
+
+1. 将项目推送到 GitHub 仓库
+2. GitHub Actions 会自动构建和部署
+3. 在仓库设置中启用 GitHub Pages
+4. 选择 `gh-pages` 分支作为源
+
+## 自定义配置
+
+编辑 `config.json` 文件来自定义你的博客：
+
+- `site.title`: 博客标题
+- `site.description`: 博客描述
+- `site.author`: 作者名
+- `build.theme`: 使用的主题
+- `theme_config`: 主题相关配置
+
+## 下一步
+
+- 在 `md/` 目录创建更多文章
+- 自定义 `theme/` 目录中的主题样式
+- 修改 `config.json` 配置你的博客信息
+- 将项目推送到 GitHub 并启用自动部署
+
+祝你写作愉快！🎉
