@@ -16,6 +16,7 @@
 ### 通过 pip 安装
 
 ```bash
+# 暂不可用
 pip install mblog
 ```
 
@@ -285,8 +286,8 @@ mblog 使用 Python-Markdown 库，支持大多数标准 Markdown 语法和常�
 
 ## 联系方式
 
-- GitHub: https://github.com/username/mblog
-- Issues: https://github.com/username/mblog/issues
+- GitHub: https://github.com/soft98-top/mblog
+- Issues: https://github.com/soft98-top/mblog/issues
 
 ---
 
