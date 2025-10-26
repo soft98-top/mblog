@@ -13,11 +13,14 @@ theme/
 │   ├── base.html      # 基础模板（必需）
 │   ├── index.html     # 首页模板（必需）
 │   ├── post.html      # 文章详情页模板（必需）
-│   ├── archive.html   # 归档页模板（可选）
-│   └── tag.html       # 标签页模板（可选）
+│   ├── archive.html   # 归档页模板（推荐）
+│   ├── tags.html      # 标签索引页模板（推荐）
+│   └── tag.html       # 单个标签页模板（可选）
 └── static/            # 静态资源目录（可选）
     ├── css/           # 样式文件
+    │   └── style.css
     ├── js/            # JavaScript 文件
+    │   └── main.js
     └── images/        # 图片资源
 ```
 
@@ -36,6 +39,7 @@ theme/
     "index": "index.html",
     "post": "post.html",
     "archive": "archive.html",
+    "tags": "tags.html",
     "tag": "tag.html"
   }
 }
@@ -48,11 +52,12 @@ theme/
 - `author`：主题作者（可选）
 - `description`：主题描述（可选）
 - `templates`：模板文件映射（必需）
-  - `base`：基础模板文件名
-  - `index`：首页模板文件名
-  - `post`：文章详情页模板文件名
-  - `archive`：归档页模板文件名（可选）
-  - `tag`：标签页模板文件名（可选）
+  - `base`：基础模板文件名（必需）
+  - `index`：首页模板文件名（必需）
+  - `post`：文章详情页模板文件名（必需）
+  - `archive`：归档页模板文件名（推荐）
+  - `tags`：标签索引页模板文件名（推荐）
+  - `tag`：单个标签页模板文件名（可选）
 
 ## 模板系统
 
@@ -155,9 +160,15 @@ mblog 使用 Jinja2 作为模板引擎。所有模板都可以使用 Jinja2 的�
 - `post.author`：作者
 - `post.description`：文章描述/摘要
 - `post.tags`：标签列表
-- `post.slug`：URL slug
+- `post.slug`：URL slug（基于标题和日期生成）
+- `post.relative_path`：相对于 md 目录的路径（不含扩展名），**推荐用于生成 URL**
 - `post.html`：HTML 内容
 - `post.content`：原始 Markdown 内容
+
+**关于文章 URL：**
+- 使用 `post.relative_path` 可以保持原始目录结构
+- 例如：`md/tech/python.md` → `post.relative_path` 为 `tech/python`
+- 生成链接：`/posts/{{ post.relative_path }}.html`
 
 **示例：**
 
@@ -287,7 +298,7 @@ mblog 使用 Jinja2 作为模板引擎。所有模板都可以使用 Jinja2 的�
             {% for post in year_posts %}
             <li>
                 <time>{{ post.date.strftime('%m-%d') }}</time>
-                <a href="/posts/{{ post.slug }}.html">{{ post.title }}</a>
+                <a href="/posts/{{ post.relative_path }}.html">{{ post.title }}</a>
             </li>
             {% endfor %}
         </ul>
@@ -321,7 +332,7 @@ mblog 使用 Jinja2 作为模板引擎。所有模板都可以使用 Jinja2 的�
     <div class="posts-list">
         {% for post in posts %}
         <article class="post-preview">
-            <h2><a href="/posts/{{ post.slug }}.html">{{ post.title }}</a></h2>
+            <h2><a href="/posts/{{ post.relative_path }}.html">{{ post.title }}</a></h2>
             <div class="post-meta">
                 <span class="date">{{ post.date.strftime('%Y-%m-%d') }}</span>
             </div>

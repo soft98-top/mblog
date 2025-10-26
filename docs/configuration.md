@@ -6,6 +6,51 @@
 
 mblog 使用 JSON 格式的配置文件 `config.json`，位于项目根目录。
 
+## 文章组织
+
+### 多级目录支持
+
+mblog 支持在 `md/` 目录下使用多级目录组织文章：
+
+```
+md/
+├── welcome.md              # 根目录文章
+├── tech/                   # 技术分类
+│   ├── python-tips.md
+│   └── javascript.md
+├── life/                   # 生活分类
+│   ├── travel/            # 旅行子分类
+│   │   ├── beijing.md
+│   │   └── shanghai.md
+│   └── reading.md
+└── projects/              # 项目分类
+    └── my-app.md
+```
+
+生成的 HTML 文件会保持相同的目录结构：
+
+```
+public/posts/
+├── welcome.html
+├── tech/
+│   ├── python-tips.html
+│   └── javascript.html
+├── life/
+│   ├── travel/
+│   │   ├── beijing.html
+│   │   └── shanghai.html
+│   └── reading.html
+└── projects/
+    └── my-app.html
+```
+
+### 文章 URL
+
+文章的 URL 路径与文件路径对应：
+- `md/welcome.md` → `/posts/welcome.html`
+- `md/tech/python-tips.md` → `/posts/tech/python-tips.html`
+- `md/life/travel/beijing.md` → `/posts/life/travel/beijing.html`
+
 ## 完整配置示例
 
 ```json
@@ -22,7 +67,9 @@ mblog 使用 JSON 格式的配置文件 `config.json`，位于项目根目录。
     "output_dir": "public",
     "theme": "default",
     "posts_dir": "md",
-    "clean_output": true
+    "clean_output": true,
+    "generate_rss": true,
+    "generate_sitemap": true
   },
   "theme_config": {
     "posts_per_page": 10,
@@ -30,13 +77,9 @@ mblog 使用 JSON 格式的配置文件 `config.json`，位于项目根目录。
     "show_toc": true,
     "show_reading_time": true,
     "syntax_highlight": true,
-    "excerpt_length": 200
-  },
-  "features": {
-    "rss": true,
-    "sitemap": true,
-    "archive": true,
-    "tags": true
+    "excerpt_length": 200,
+    "enable_tags": true,
+    "enable_archive": true
   },
   "social": {
     "github": "https://github.com/zhangsan",
@@ -193,6 +236,44 @@ mblog 使用 JSON 格式的配置文件 `config.json`，位于项目根目录。
 ```json
 "clean_output": false
 ```
+
+#### build.generate_rss
+
+- **类型**：`boolean`
+- **必需**：否
+- **默认值**：`true`
+- **说明**：是否生成 RSS 订阅文件 (rss.xml)
+
+**示例：**
+```json
+"generate_rss": true
+```
+
+生成的 RSS 文件包含：
+- 博客基本信息（标题、描述、语言）
+- 最新 20 篇文章
+- 文章标题、链接、描述、发布日期
+- 文章标签（作为分类）
+- 符合 RSS 2.0 标准
+
+#### build.generate_sitemap
+
+- **类型**：`boolean`
+- **必需**：否
+- **默认值**：`true`
+- **说明**：是否生成 Sitemap 文件 (sitemap.xml)
+
+**示例：**
+```json
+"generate_sitemap": true
+```
+
+生成的 Sitemap 包含：
+- 首页、归档页、标签索引页
+- 所有文章页面（保持目录结构）
+- 所有标签页面
+- 每个页面的最后修改时间、更新频率和优先级
+- 符合 Sitemap 协议标准
 
 ### theme_config - 主题配置
 
