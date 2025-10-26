@@ -191,6 +191,10 @@ class Renderer:
             end_idx = start_idx + posts_per_page
             posts = posts[start_idx:end_idx]
             
+            # 生成分页 URL
+            prev_url = '/' if page == 2 else f'/page/{page - 1}.html' if page > 1 else None
+            next_url = f'/page/{page + 1}.html' if page < total_pages else None
+            
             pagination = {
                 'page': page,
                 'total_pages': total_pages,
@@ -198,7 +202,9 @@ class Renderer:
                 'has_prev': page > 1,
                 'has_next': page < total_pages,
                 'prev_page': page - 1 if page > 1 else None,
-                'next_page': page + 1 if page < total_pages else None
+                'next_page': page + 1 if page < total_pages else None,
+                'prev_url': prev_url,
+                'next_url': next_url
             }
         
         try:
