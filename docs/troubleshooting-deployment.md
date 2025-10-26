@@ -1,5 +1,120 @@
 # 部署问题排查指南
 
+## 问题：GitHub Pages 子目录部署后样式和链接失效
+
+### 症状
+
+部署到 GitHub Pages 项目页面（如 `https://username.github.io/repo-name/`）后：
+- ❌ 页面样式丢失（CSS 未加载）
+- ❌ 点击链接显示 404
+- ❌ 图片无法显示
+- ❌ JavaScript 文件加载失败
+
+### 原因分析
+
+当部署到项目页面时，URL 包含仓库名作为子目录。如果没有配置 `base_path`，生成的链接会是绝对路径（如 `/posts/hello.html`），实际访问时会变成 `https://username.github.io/posts/hello.html`，而不是正确的 `https://username.github.io/repo-name/posts/hello.html`。
+
+### 解决方案
+
+#### 方案 1：配置 base_path（推荐）
+
+1. 编辑 `config.json`，添加 `base_path` 配置：
+
+```json
+{
+  "site": {
+    "title": "我的博客",
+    "url": "https://username.github.io/repo-name",
+    "base_path": "/repo-name",
+    ...
+  }
+}
+```
+
+**注意：**
+- `base_path` 应该与你的仓库名一致
+- 以 `/` 开头，不以 `/` 结尾
+- `url` 也要包含完整路径
+
+2. 重新生成静态文件：
+
+```bash
+python gen.py
+```
+
+3. 提交并推送：
+
+```bash
+git add .
+git commit -m "Configure base_path for subdirectory deployment"
+git push
+```
+
+#### 方案 2：使用用户/组织页面
+
+如果你不想配置 `base_path`，可以使用用户或组织页面：
+
+1. 将仓库重命名为 `username.github.io`
+2. 部署后 URL 会是 `https://username.github.io/`（无子目录）
+3. 不需要配置 `base_path`
+
+#### 方案 3：使用自定义域名
+
+配置自定义域名后，也不需要 `base_path`：
+
+1. 在仓库根目录创建 `CNAME` 文件：
+```
+blog.example.com
+```
+
+2. 在域名提供商处配置 DNS
+3. 在 GitHub Pages 设置中添加自定义域名
+4. `config.json` 中设置：
+```json
+{
+  "site": {
+    "url": "https://blog.example.com",
+    "base_path": "",
+    ...
+  }
+}
+```
+
+### 验证配置
+
+#### 1. 检查生成的 HTML
+
+```bash
+cat public/index.html | grep href
+```
+
+应该看到类似：
+```html
+<a href="/repo-name/">首页</a>
+<link rel="stylesheet" href="/repo-name/static/css/style.css">
+```
+
+#### 2. 使用浏览器开发者工具
+
+部署后，按 F12 打开开发者工具：
+- Console 标签：查看是否有 404 错误
+- Network 标签：查看资源加载情况
+
+#### 3. 测试所有链接
+
+- 首页
+- 文章详情页
+- 标签页
+- 归档页
+- 分页
+
+### 详细文档
+
+查看完整的子目录部署配置指南：
+- [GitHub Pages 子目录部署配置](github-pages-subdirectory.md)
+
+---
+
 ## 问题：GitHub Actions 成功但步骤被跳过
 
 ### 症状

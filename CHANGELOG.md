@@ -4,6 +4,21 @@
 
 ### 新增功能
 
+#### GitHub Pages 子目录部署支持 🌐
+- 新增 `base_path` 配置选项，支持部署到子目录（如 `https://username.github.io/repo-name/`）
+- 新增 `url_for()` 和 `url_for_static()` 模板函数，自动处理子目录路径
+- 更新所有默认模板使用新的 URL 生成函数：
+  - `base.html` - 导航链接和静态资源
+  - `index.html` - 文章列表和标签链接
+  - `post.html` - 文章详情和导航
+  - `encrypted_post.html` - 加密文章页面
+  - `archive.html` - 归档页面链接
+  - `tags.html` - 标签索引和标签云
+- 新增详细的子目录部署配置文档和示例
+- 支持多种部署场景：用户页面、项目页面、自定义域名等
+- 自动处理 RSS 和 Sitemap 中的 URL
+- 提供验证脚本确保功能正确性
+
 #### 项目升级和主题管理 🔄
 - 新增 `mblog upgrade` 命令：升级现有博客的运行时文件到最新版本
 - 新增 `mblog theme update` 命令：更新主题文件到最新版本

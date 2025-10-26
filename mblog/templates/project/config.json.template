@@ -4,6 +4,7 @@
     "description": "这是我的个人博客，记录技术与生活",
     "author": "博客作者",
     "url": "https://example.com",
+    "base_path": "",
     "language": "zh-CN"
   },
   "build": {

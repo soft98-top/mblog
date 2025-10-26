@@ -195,7 +195,27 @@ python -m http.server 8000
 
 ### 7. 部署到 GitHub Pages
 
-1. 在 GitHub 上创建一个新仓库
+#### 配置 base_path（重要）
+
+如果你的仓库名不是 `username.github.io`，需要配置 `base_path` 以支持子目录部署。
+
+编辑 `config.json`：
+
+```json
+{
+  "site": {
+    "url": "https://your-username.github.io/my-blog",
+    "base_path": "/my-blog",
+    ...
+  }
+}
+```
+
+**注意：** `base_path` 应该与你的仓库名一致，以 `/` 开头，不以 `/` 结尾。
+
+#### 部署步骤
+
+1. 在 GitHub 上创建一个新仓库（例如 `my-blog`）
 2. 将项目推送到 GitHub：
 
 ```bash
@@ -209,6 +229,8 @@ git push -u origin main
 
 3. 在仓库设置中启用 GitHub Pages，选择 `gh-pages` 分支
 4. 每次推送代码时，GitHub Actions 会自动构建和部署你的博客
+
+**详细配置说明：** 查看 [GitHub Pages 子目录部署配置](docs/github-pages-subdirectory.md)
 
 ## 命令参考
 
@@ -381,6 +403,7 @@ theme/
 - [独立内容仓库文档](docs/separate-content-repo.md) - 内容与配置分离的双仓库模式
 - [双仓库实战示例](docs/dual-repo-example.md) - 从零搭建团队博客的完整示例
 - [部署文档](docs/deployment.md) - 部署到各种平台的指南
+- [GitHub Pages 子目录部署](docs/github-pages-subdirectory.md) - 解决子目录部署的路径问题
 - [部署方式升级](docs/DEPLOY_PAGES_UPGRADE.md) - 升级到官方 deploy-pages action
 - [部署问题排查](docs/troubleshooting-deployment.md) - 解决常见部署问题
 
