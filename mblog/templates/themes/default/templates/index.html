@@ -9,7 +9,7 @@
         <article class="post-preview">
             <header class="post-header">
                 <h2 class="post-title">
-                    <a href="/posts/{{ post.slug }}.html">{{ post.title }}</a>
+                    <a href="/posts/{{ post.relative_path }}.html">{{ post.title }}</a>
                 </h2>
                 <div class="post-meta">
                     <time datetime="{{ post.date.isoformat() }}">
@@ -35,7 +35,7 @@
             </div>
             {% endif %}
             
-            <a href="/posts/{{ post.slug }}.html" class="read-more">阅读全文 →</a>
+            <a href="/posts/{{ post.relative_path }}.html" class="read-more">阅读全文 →</a>
         </article>
         {% endfor %}
     {% else %}

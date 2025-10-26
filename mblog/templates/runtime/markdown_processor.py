@@ -17,6 +17,7 @@ class Post:
     """文章数据模型"""
     filepath: str              # 源文件路径
     slug: str                  # URL slug
+    relative_path: str         # 相对于 md 目录的路径（不含扩展名）
     title: str                 # 标题
     date: datetime             # 发布日期
     author: str                # 作者
@@ -57,7 +58,7 @@ class MarkdownProcessor:
     
     def load_posts(self) -> List[Post]:
         """
-        加载所有文章
+        加载所有文章（递归扫描子目录）
         
         Returns:
             文章列表，按日期降序排序
@@ -66,7 +67,8 @@ class MarkdownProcessor:
             return []
         
         posts = []
-        for md_file in self.md_dir.glob('*.md'):
+        # 递归查找所有 .md 文件
+        for md_file in self.md_dir.rglob('*.md'):
             try:
                 post = self.parse_post(str(md_file))
                 posts.append(post)
@@ -127,10 +129,14 @@ class MarkdownProcessor:
         # 生成 slug
         slug = self._generate_slug(title, date)
         
+        # 计算相对路径（相对于 md 目录，不含扩展名）
+        relative_path = self._get_relative_path(filepath_obj)
+        
         # 创建 Post 对象
         post = Post(
             filepath=str(filepath_obj),
             slug=slug,
+            relative_path=relative_path,
             title=title,
             date=date,
             author=author,
@@ -246,3 +252,22 @@ class MarkdownProcessor:
             raise ValueError(f"无法解析日期格式: {date_value}")
         
         raise ValueError(f"不支持的日期类型: {type(date_value)}")
+    
+    def _get_relative_path(self, filepath: Path) -> str:
+        """
+        获取相对于 md 目录的路径（不含扩展名）
+        
+        Args:
+            filepath: 文件的完整路径
+            
+        Returns:
+            相对路径字符串，例如: "welcome" 或 "tech/python-tips"
+        """
+        try:
+            # 获取相对于 md_dir 的路径
+            rel_path = filepath.relative_to(self.md_dir)
+            # 移除 .md 扩展名
+            return str(rel_path.with_suffix(''))
+        except ValueError:
+            # 如果文件不在 md_dir 下，使用文件名（不含扩展名）
+            return filepath.stem

@@ -172,15 +172,16 @@ class StaticGenerator:
         """
         生成文章详情页
         
-        每篇文章生成一个 HTML 文件，放在 posts 目录下
-        文件名使用文章的 slug
+        每篇文章生成一个 HTML 文件，保留原始目录结构
+        使用 relative_path 来确定输出路径
         """
         posts_dir = self.output_dir / 'posts'
         posts_dir.mkdir(exist_ok=True)
         
         for post in self.posts:
             html = self.renderer.render_post(post)
-            post_path = posts_dir / f'{post.slug}.html'
+            # 使用 relative_path 保留目录结构
+            post_path = posts_dir / f'{post.relative_path}.html'
             self._write_file(post_path, html)
         
         print(f"  ✓ 文章详情页: {len(self.posts)} 篇")
