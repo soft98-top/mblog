@@ -5,6 +5,7 @@ mblog CLI 模块
 """
 import argparse
 import sys
+from pathlib import Path
 from typing import List, Optional
 
 from mblog import __version__, __description__
@@ -35,8 +36,10 @@ class MblogCLI:
             epilog="""
 示例:
   mblog new my-blog          创建名为 my-blog 的新博客项目
+  mblog upgrade              升级当前博客的运行时到最新版本
+  mblog theme update         更新当前博客的主题文件
+  mblog theme reset          重置主题为默认主题
   mblog --version            显示版本信息
-  mblog --help               显示帮助信息
 
 更多信息请访问: https://github.com/username/mblog
             """
@@ -72,6 +75,47 @@ class MblogCLI:
             default=None
         )
         
+        # upgrade 命令
+        upgrade_parser = subparsers.add_parser(
+            'upgrade',
+            help='升级博客运行时到最新版本',
+            description='更新 _mblog/ 目录中的运行时文件到最新版本'
+        )
+        upgrade_parser.add_argument(
+            '-p', '--path',
+            dest='project_path',
+            help='博客项目路径（默认为当前目录）',
+            default='.'
+        )
+        upgrade_parser.add_argument(
+            '-f', '--force',
+            action='store_true',
+            help='强制覆盖，不进行备份确认'
+        )
+        
+        # theme 命令
+        theme_parser = subparsers.add_parser(
+            'theme',
+            help='管理博客主题',
+            description='更换或更新博客主题'
+        )
+        theme_parser.add_argument(
+            'action',
+            choices=['update', 'reset'],
+            help='操作类型：update=更新当前主题，reset=重置为默认主题'
+        )
+        theme_parser.add_argument(
+            '-p', '--path',
+            dest='project_path',
+            help='博客项目路径（默认为当前目录）',
+            default='.'
+        )
+        theme_parser.add_argument(
+            '-f', '--force',
+            action='store_true',
+            help='强制覆盖，不进行备份确认'
+        )
+        
         return parser
     
     def run(self, args: Optional[List[str]] = None) -> int:
@@ -97,6 +141,17 @@ class MblogCLI:
                 return self.handle_new(
                     parsed_args.project_name,
                     parsed_args.target_dir
+                )
+            elif parsed_args.command == 'upgrade':
+                return self.handle_upgrade(
+                    parsed_args.project_path,
+                    parsed_args.force
+                )
+            elif parsed_args.command == 'theme':
+                return self.handle_theme(
+                    parsed_args.action,
+                    parsed_args.project_path,
+                    parsed_args.force
                 )
             else:
                 print(f"✗ 未知命令: {parsed_args.command}", file=sys.stderr)
@@ -185,6 +240,121 @@ class MblogCLI:
             return 1
         except Exception as e:
             print(f"✗ 创建项目时发生错误: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
+            return 1
+    
+    def handle_upgrade(self, project_path: str, force: bool = False) -> int:
+        """处理 upgrade 命令
+        
+        Args:
+            project_path: 博客项目路径
+            force: 是否强制覆盖
+            
+        Returns:
+            int: 退出码，0 表示成功，非 0 表示失败
+        """
+        try:
+            from mblog.initializer import ProjectUpgrader
+            
+            upgrader = ProjectUpgrader(project_path)
+            
+            # 验证项目
+            if not upgrader.validate_project():
+                print("✗ 当前目录不是有效的 mblog 项目", file=sys.stderr)
+                print("  提示：请确保目录中包含 _mblog/ 和 config.json", file=sys.stderr)
+                return 1
+            
+            # 显示当前版本信息
+            print(f"\n正在升级博客运行时...")
+            print(f"项目路径: {Path(project_path).absolute()}")
+            
+            # 如果不是强制模式，询问确认
+            if not force:
+                print("\n⚠️  此操作将更新 _mblog/ 目录中的所有运行时文件")
+                print("   建议先备份或提交当前更改到 Git")
+                confirm = input("\n是否继续？[y/N]: ").strip().lower()
+                if confirm != 'y':
+                    print("✗ 操作已取消")
+                    return 0
+            
+            # 执行升级
+            upgrader.upgrade_runtime()
+            
+            print("\n✓ 运行时升级成功！")
+            print("\n下一步操作:")
+            print("  1. 测试生成功能: python gen.py")
+            print("  2. 如有问题，可从备份恢复")
+            
+            return 0
+            
+        except MblogError as e:
+            print(f"✗ {e}", file=sys.stderr)
+            return 1
+        except Exception as e:
+            print(f"✗ 升级时发生错误: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
+            return 1
+    
+    def handle_theme(self, action: str, project_path: str, force: bool = False) -> int:
+        """处理 theme 命令
+        
+        Args:
+            action: 操作类型（update 或 reset）
+            project_path: 博客项目路径
+            force: 是否强制覆盖
+            
+        Returns:
+            int: 退出码，0 表示成功，非 0 表示失败
+        """
+        try:
+            from mblog.initializer import ProjectUpgrader
+            
+            upgrader = ProjectUpgrader(project_path)
+            
+            # 验证项目
+            if not upgrader.validate_project():
+                print("✗ 当前目录不是有效的 mblog 项目", file=sys.stderr)
+                print("  提示：请确保目录中包含 theme/ 和 config.json", file=sys.stderr)
+                return 1
+            
+            print(f"\n正在{('更新' if action == 'update' else '重置')}主题...")
+            print(f"项目路径: {Path(project_path).absolute()}")
+            
+            # 如果不是强制模式，询问确认
+            if not force:
+                if action == 'update':
+                    print("\n⚠️  此操作将更新 theme/ 目录中的默认主题文件")
+                    print("   自定义的修改可能会被覆盖")
+                else:
+                    print("\n⚠️  此操作将重置 theme/ 目录为默认主题")
+                    print("   所有自定义修改将丢失")
+                print("   建议先备份或提交当前更改到 Git")
+                confirm = input("\n是否继续？[y/N]: ").strip().lower()
+                if confirm != 'y':
+                    print("✗ 操作已取消")
+                    return 0
+            
+            # 执行主题操作
+            if action == 'update':
+                upgrader.update_theme()
+                print("\n✓ 主题更新成功！")
+            else:  # reset
+                upgrader.reset_theme()
+                print("\n✓ 主题重置成功！")
+            
+            print("\n下一步操作:")
+            print("  1. 检查 theme/ 目录中的文件")
+            print("  2. 重新生成博客: python gen.py")
+            
+            return 0
+            
+        except MblogError as e:
+            print(f"✗ {e}", file=sys.stderr)
+            return 1
+        except Exception as e:
+            print(f"✗ 主题操作时发生错误: {e}", file=sys.stderr)
             import traceback
             traceback.print_exc()
             return 1

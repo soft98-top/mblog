@@ -216,16 +216,85 @@ git push -u origin main
 创建新的博客项目。
 
 ```bash
-mblog new <project_name>
+mblog new <project_name> [options]
 ```
 
 **参数：**
 - `<project_name>`：项目名称（必需）
+- `-d, --dir <target_dir>`：目标目录（可选，默认为当前目录）
 
 **示例：**
 ```bash
 mblog new my-awesome-blog
+mblog new my-blog -d ~/projects
 ```
+
+### mblog upgrade
+
+升级现有博客项目的运行时文件到最新版本。
+
+```bash
+mblog upgrade [options]
+```
+
+**参数：**
+- `-p, --path <project_path>`：博客项目路径（可选，默认为当前目录）
+- `-f, --force`：强制覆盖，不进行确认（可选）
+
+**示例：**
+```bash
+# 在博客目录中升级
+cd my-blog
+mblog upgrade
+
+# 指定博客路径升级
+mblog upgrade -p ~/projects/my-blog
+
+# 强制升级，不询问确认
+mblog upgrade --force
+```
+
+**说明：**
+- 升级会自动备份现有的 `_mblog/` 目录
+- 备份目录命名格式：`_mblog.backup_YYYYMMDD_HHMMSS`
+- 升级后建议运行 `python gen.py` 测试生成功能
+
+### mblog theme
+
+管理博客主题，支持更新或重置主题文件。
+
+```bash
+mblog theme <action> [options]
+```
+
+**参数：**
+- `<action>`：操作类型（必需）
+  - `update`：更新当前主题到最新版本
+  - `reset`：重置主题为默认主题（会删除自定义修改）
+- `-p, --path <project_path>`：博客项目路径（可选，默认为当前目录）
+- `-f, --force`：强制覆盖，不进行确认（可选）
+
+**示例：**
+```bash
+# 更新主题文件
+cd my-blog
+mblog theme update
+
+# 重置主题为默认主题
+mblog theme reset
+
+# 指定博客路径更新主题
+mblog theme update -p ~/projects/my-blog
+
+# 强制重置，不询问确认
+mblog theme reset --force
+```
+
+**说明：**
+- `update`：只更新默认主题文件，不会删除自定义添加的文件
+- `reset`：完全删除 `theme/` 目录并重新创建，会丢失所有自定义修改
+- 操作前会自动备份现有的 `theme/` 目录
+- 备份目录命名格式：`theme.backup_YYYYMMDD_HHMMSS`
 
 ### mblog --help
 
@@ -305,6 +374,7 @@ theme/
 ## 文档
 
 - [配置文档](docs/configuration.md) - 详细的配置选项说明
+- [升级指南](docs/upgrade-guide.md) - 如何升级现有博客项目
 - [主题开发文档](docs/theme-development.md) - 如何创建自定义主题
 - [加密文章文档](docs/encrypted-posts.md) - 如何创建密码保护的文章
 - [独立内容仓库文档](docs/separate-content-repo.md) - 内容与配置分离的双仓库模式

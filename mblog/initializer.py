@@ -2,11 +2,13 @@
 项目初始化模块
 
 负责创建新的博客项目结构，包括目录创建、运行时复制、模板文件生成等。
+同时提供项目升级功能，用于更新运行时和主题。
 """
 import os
 import shutil
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
 
 from mblog.exceptions import ProjectExistsError, MblogError
 
@@ -370,3 +372,184 @@ content_deploy_key.pub
             print("  - 推送到 GitHub 自动触发部署（需配置 GitHub Pages）")
         
         print("\n开始写作吧！✨\n")
+
+
+
+class ProjectUpgrader:
+    """项目升级器
+    
+    负责升级现有博客项目的运行时和主题文件。
+    """
+    
+    def __init__(self, project_path: str = '.'):
+        """初始化项目升级器
+        
+        Args:
+            project_path: 博客项目路径，默认为当前目录
+        """
+        self.project_path = Path(project_path).resolve()
+        self.mblog_dir = self.project_path / "_mblog"
+        self.theme_dir = self.project_path / "theme"
+        self.config_file = self.project_path / "config.json"
+        
+        # 获取 mblog 包的根目录
+        self.mblog_root = Path(__file__).parent
+        self.templates_dir = self.mblog_root / "templates"
+    
+    def validate_project(self) -> bool:
+        """验证是否为有效的 mblog 项目
+        
+        Returns:
+            bool: 如果是有效项目返回 True
+        """
+        return (
+            self.project_path.exists() and
+            self.mblog_dir.exists() and
+            self.config_file.exists()
+        )
+    
+    def upgrade_runtime(self) -> None:
+        """升级运行时文件
+        
+        将 _mblog/ 目录中的运行时文件更新到最新版本。
+        会自动创建备份。
+        
+        Raises:
+            MblogError: 升级过程中发生错误
+        """
+        try:
+            # 创建备份
+            backup_dir = self._create_backup(self.mblog_dir)
+            print(f"✓ 已创建备份: {backup_dir.name}")
+            
+            # 获取运行时源目录
+            runtime_src = self.templates_dir / "runtime"
+            if not runtime_src.exists():
+                raise MblogError(f"运行时模板目录不存在: {runtime_src}")
+            
+            # 复制所有 Python 文件
+            updated_files = []
+            for py_file in runtime_src.glob("*.py"):
+                target_file = self.mblog_dir / py_file.name
+                shutil.copy2(py_file, target_file)
+                updated_files.append(py_file.name)
+            
+            print(f"✓ 已更新 {len(updated_files)} 个运行时文件")
+            for filename in updated_files:
+                print(f"  - {filename}")
+            
+        except Exception as e:
+            raise MblogError(f"运行时升级失败: {e}") from e
+    
+    def update_theme(self) -> None:
+        """更新主题文件
+        
+        更新 theme/ 目录中的默认主题文件到最新版本。
+        只更新默认主题文件，不会删除用户添加的自定义文件。
+        
+        Raises:
+            MblogError: 更新过程中发生错误
+        """
+        try:
+            # 创建备份
+            backup_dir = self._create_backup(self.theme_dir)
+            print(f"✓ 已创建备份: {backup_dir.name}")
+            
+            # 获取主题源目录
+            theme_src = self.templates_dir / "themes" / "default"
+            if not theme_src.exists():
+                raise MblogError(f"默认主题目录不存在: {theme_src}")
+            
+            # 递归复制主题文件
+            updated_files = []
+            self._copy_theme_files(theme_src, self.theme_dir, updated_files)
+            
+            print(f"✓ 已更新 {len(updated_files)} 个主题文件")
+            
+        except Exception as e:
+            raise MblogError(f"主题更新失败: {e}") from e
+    
+    def reset_theme(self) -> None:
+        """重置主题为默认主题
+        
+        完全删除 theme/ 目录并重新创建默认主题。
+        会删除所有自定义修改。
+        
+        Raises:
+            MblogError: 重置过程中发生错误
+        """
+        try:
+            # 创建备份
+            backup_dir = self._create_backup(self.theme_dir)
+            print(f"✓ 已创建备份: {backup_dir.name}")
+            
+            # 删除现有主题目录
+            shutil.rmtree(self.theme_dir)
+            self.theme_dir.mkdir()
+            
+            # 获取主题源目录
+            theme_src = self.templates_dir / "themes" / "default"
+            if not theme_src.exists():
+                raise MblogError(f"默认主题目录不存在: {theme_src}")
+            
+            # 复制整个主题目录
+            file_count = 0
+            for item in theme_src.iterdir():
+                if item.is_file():
+                    shutil.copy2(item, self.theme_dir / item.name)
+                    file_count += 1
+                elif item.is_dir():
+                    shutil.copytree(item, self.theme_dir / item.name)
+                    file_count += sum(1 for _ in (self.theme_dir / item.name).rglob('*') if _.is_file())
+            
+            print(f"✓ 已重置主题，共 {file_count} 个文件")
+            
+        except Exception as e:
+            raise MblogError(f"主题重置失败: {e}") from e
+    
+    def _create_backup(self, target_dir: Path) -> Path:
+        """创建目录备份
+        
+        Args:
+            target_dir: 要备份的目录
+            
+        Returns:
+            Path: 备份目录路径
+            
+        Raises:
+            MblogError: 备份失败
+        """
+        if not target_dir.exists():
+            raise MblogError(f"目标目录不存在: {target_dir}")
+        
+        # 生成备份目录名（带时间戳）
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_name = f"{target_dir.name}.backup_{timestamp}"
+        backup_dir = target_dir.parent / backup_name
+        
+        # 创建备份
+        shutil.copytree(target_dir, backup_dir)
+        
+        return backup_dir
+    
+    def _copy_theme_files(self, src_dir: Path, dst_dir: Path, updated_files: list) -> None:
+        """递归复制主题文件
+        
+        Args:
+            src_dir: 源目录
+            dst_dir: 目标目录
+            updated_files: 用于记录更新的文件列表
+        """
+        for item in src_dir.iterdir():
+            src_item = src_dir / item.name
+            dst_item = dst_dir / item.name
+            
+            if item.is_file():
+                # 复制文件
+                dst_item.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_item, dst_item)
+                updated_files.append(str(dst_item.relative_to(self.theme_dir)))
+            elif item.is_dir():
+                # 递归处理子目录
+                dst_item.mkdir(parents=True, exist_ok=True)
+                self._copy_theme_files(src_item, dst_item, updated_files)

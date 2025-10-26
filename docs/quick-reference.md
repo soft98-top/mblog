@@ -93,6 +93,17 @@ mblog --help
 # 创建项目
 mblog new <name>
 
+# 升级运行时
+mblog upgrade                    # 在博客目录中
+mblog upgrade -p my-blog         # 指定路径
+mblog upgrade --force            # 强制升级，不询问
+
+# 管理主题
+mblog theme update               # 更新主题文件
+mblog theme reset                # 重置为默认主题
+mblog theme update -p my-blog    # 指定路径
+mblog theme reset --force        # 强制重置，不询问
+
 # 生成静态文件
 python gen.py
 
