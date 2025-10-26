@@ -172,7 +172,7 @@ python gen.py
 
 ### Workflow 配置
 
-生成的 `.workflow/deploy.yml` 文件包含：
+生成的 `.github/workflows/deploy.yml` 文件包含：
 
 ```yaml
 on:
@@ -276,14 +276,14 @@ git clone git@github.com:username/blog-content.git md
 1. 创建新的内容仓库
 2. 将 `md/` 目录的内容移动到内容仓库
 3. 按照上述步骤配置 Deploy Key 和 Secrets
-4. 更新 `.workflow/deploy.yml` 使用双仓库模式的配置
+4. 更新 `.github/workflows/deploy.yml` 使用双仓库模式的配置
 5. 在博客仓库的 `.gitignore` 中添加 `md/`
 
 ### 从双仓库迁移到单仓库
 
 1. 克隆内容仓库到 `md/` 目录
 2. 删除 `.gitmodules` 文件
-3. 更新 `.workflow/deploy.yml` 使用单仓库模式的配置
+3. 更新 `.github/workflows/deploy.yml` 使用单仓库模式的配置
 4. 从 `.gitignore` 中移除 `md/`
 5. 提交所有更改
 
@@ -291,7 +291,7 @@ git clone git@github.com:username/blog-content.git md
 
 ### 自定义同步频率
 
-编辑 `.workflow/deploy.yml`：
+编辑 `.github/workflows/deploy.yml`：
 
 ```yaml
 schedule:

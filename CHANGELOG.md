@@ -13,6 +13,35 @@
 - 支持 `--path` 参数指定博客项目路径
 - 详细的操作提示和成功反馈
 
+### 修复
+
+#### GitHub Actions 部署问题 🐛
+- 修复双仓库模式下 push 或手动触发时步骤被跳过的问题
+- 添加强制构建逻辑：push 和手动触发时不再检查内容变化
+- 定时任务仍然保持原有行为（只在有内容变化时构建）
+- 新增部署问题排查文档
+- 提供 workflow 更新脚本
+
+### 改进
+
+#### GitHub Actions 部署方式升级 ⬆️
+- 使用官方 `actions/deploy-pages@v4` 替代第三方 `peaceiris/actions-gh-pages@v3`
+- 更新权限配置：使用 `pages: write` 和 `id-token: write`
+- 添加 `actions/configure-pages@v4` 和 `actions/upload-pages-artifact@v3`
+- 支持 pip 缓存加速依赖安装
+- 更新 Python 版本到 3.10
+- 添加并发控制避免重复部署
+
+### 重要修复
+
+#### GitHub Actions 目录结构修复 🔧
+- **重要**：修复了 workflow 文件的目录结构
+- 从错误的 `.workflow/` 改为正确的 `.github/workflows/`
+- 这是 GitHub Actions 能够正常工作的必要条件
+- 所有新创建的项目会自动使用正确的目录结构
+- 旧项目需要手动迁移（参见 [迁移指南](docs/GITHUB_ACTIONS_FIX.md)）
+- 更新了所有相关文档和测试
+
 #### 文章图片自动处理 🖼️
 - 自动识别和处理 Markdown 文章中的相对路径图片
 - 将图片复制到输出目录的 `assets/images/` 下

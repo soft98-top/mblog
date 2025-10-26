@@ -104,7 +104,7 @@ class TestDirectoryStructure:
         assert initializer.project_path.exists()
         
         # 验证子目录
-        assert (initializer.project_path / ".workflow").exists()
+        assert (initializer.project_path / ".github" / "workflows").exists()
         assert (initializer.project_path / "md").exists()
         assert (initializer.project_path / "theme").exists()
         assert (initializer.project_path / "_mblog").exists()
@@ -116,7 +116,7 @@ class TestDirectoryStructure:
         
         # 这些目录在结构创建后应该是空的
         # 它们会在后续步骤中被填充
-        assert (initializer.project_path / ".workflow").exists()
+        assert (initializer.project_path / ".github" / "workflows").exists()
         assert (initializer.project_path / "md").exists()
         assert (initializer.project_path / "theme").exists()
         assert (initializer.project_path / "_mblog").exists()
@@ -234,7 +234,7 @@ class TestTemplateFiles:
         initializer = ProjectInitializer(project_name, str(temp_dir))
         initializer.create_project()
         
-        workflow_file = initializer.project_path / ".workflow" / "deploy.yml"
+        workflow_file = initializer.project_path / ".github" / "workflows" / "deploy.yml"
         assert workflow_file.exists()
         assert workflow_file.is_file()
         
@@ -312,8 +312,8 @@ class TestCompleteProjectStructure:
         
         # 验证所有必需的文件和目录
         expected_structure = [
-            ".workflow",
-            ".workflow/deploy.yml",
+            ".github/workflows",
+            ".github/workflows/deploy.yml",
             "md",
             "md/welcome.md",
             "theme",
@@ -531,7 +531,7 @@ class TestSeparateContentRepo:
         )
         initializer.create_project()
         
-        workflow = initializer.project_path / ".workflow" / "deploy.yml"
+        workflow = initializer.project_path / ".github" / "workflows" / "deploy.yml"
         assert workflow.exists()
         
         content = workflow.read_text()

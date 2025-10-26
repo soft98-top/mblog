@@ -52,8 +52,9 @@ mblog new my-blog
 
 ```
 my-blog/
-├── .workflow/          # GitHub Actions 配置
-│   └── deploy.yml
+├── .github/
+│   └── workflows/      # GitHub Actions 配置
+│       └── deploy.yml
 ├── md/                 # Markdown 文章目录（支持多级目录）
 │   ├── welcome.md
 │   ├── tech/
@@ -380,6 +381,8 @@ theme/
 - [独立内容仓库文档](docs/separate-content-repo.md) - 内容与配置分离的双仓库模式
 - [双仓库实战示例](docs/dual-repo-example.md) - 从零搭建团队博客的完整示例
 - [部署文档](docs/deployment.md) - 部署到各种平台的指南
+- [部署方式升级](docs/DEPLOY_PAGES_UPGRADE.md) - 升级到官方 deploy-pages action
+- [部署问题排查](docs/troubleshooting-deployment.md) - 解决常见部署问题
 
 ## 项目结构
 
@@ -436,6 +439,32 @@ mypy mblog
 ## 许可证
 
 MIT License
+
+## 重要提示
+
+### ⚠️ GitHub Actions 目录结构变更
+
+如果你使用旧版本 mblog 创建的项目，workflow 文件可能在错误的位置（`.workflow/`）。GitHub Actions 需要文件在 `.github/workflows/` 目录中才能正常工作。
+
+**快速迁移：**
+
+```bash
+cd your-blog
+bash <(curl -s https://raw.githubusercontent.com/soft98-top/mblog/main/scripts/migrate_workflow.sh)
+```
+
+或手动迁移：
+
+```bash
+mkdir -p .github/workflows
+mv .workflow/deploy.yml .github/workflows/
+rm -rf .workflow
+git add .github
+git commit -m "Fix: Move workflow to correct directory"
+git push
+```
+
+详细说明请参考 [GitHub Actions 修复文档](docs/GITHUB_ACTIONS_FIX.md)。
 
 ## 常见问题
 

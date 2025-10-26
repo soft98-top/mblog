@@ -115,7 +115,7 @@ cd public && python -m http.server 8000
 
 - 博客配置: `config.json`
 - 主题配置: `theme/theme.json`
-- 部署配置: `.workflow/deploy.yml`
+- 部署配置: `.github/workflows/deploy.yml`
 - Git 配置: `.gitmodules` (双仓库)
 
 ## 故障排查
@@ -173,7 +173,7 @@ python gen.py
 
 ## 自定义同步频率
 
-编辑 `.workflow/deploy.yml`:
+编辑 `.github/workflows/deploy.yml`:
 ```yaml
 schedule:
   - cron: '*/10 * * * *'  # 每 10 分钟

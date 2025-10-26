@@ -429,7 +429,7 @@ docker-compose up -d
 
 ### GitHub Actions 工作流详解
 
-mblog 项目包含的 `.workflow/deploy.yml` 文件：
+mblog 项目包含的 `.github/workflows/deploy.yml` 文件：
 
 ```yaml
 name: Deploy Blog
@@ -439,18 +439,28 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
+        cache: 'pip'
         
     - name: Install dependencies
       run: |
@@ -460,11 +470,17 @@ jobs:
       run: |
         python gen.py
         
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./public
+        path: './public'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
 ```
 
 ### 自定义工作流

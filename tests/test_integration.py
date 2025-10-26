@@ -52,7 +52,7 @@ class TestProjectCreation:
             
             # Verify all required directories exist (Requirement 1.2)
             expected_dirs = [
-                '.workflow',
+                '.github/workflows',
                 'md',
                 'theme',
                 'theme/templates',
@@ -72,7 +72,7 @@ class TestProjectCreation:
                 'gen.py',
                 'config.json',
                 'requirements.txt',
-                '.workflow/deploy.yml',
+                '.github/workflows/deploy.yml',
                 'md/welcome.md',
                 'theme/theme.json',
                 'theme/templates/base.html',
@@ -125,7 +125,7 @@ class TestProjectCreation:
                 assert 'jinja2' in requirements.lower(), "requirements.txt should include Jinja2"
             
             # Verify GitHub Actions workflow
-            with open(project_path / '.workflow/deploy.yml', 'r', encoding='utf-8') as f:
+            with open(project_path / '.github/workflows/deploy.yml', 'r', encoding='utf-8') as f:
                 workflow = f.read()
                 assert 'python' in workflow.lower(), "deploy.yml should reference Python"
                 assert 'gen.py' in workflow, "deploy.yml should run gen.py"

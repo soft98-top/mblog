@@ -290,7 +290,7 @@ git push
 
 ## 调整同步频率
 
-如果觉得 30 分钟太长，可以修改 `.workflow/deploy.yml`：
+如果觉得 30 分钟太长，可以修改 `.github/workflows/deploy.yml`：
 
 ```yaml
 schedule:

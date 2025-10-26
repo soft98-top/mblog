@@ -63,8 +63,9 @@ project/
 ├── .git/
 ├── .gitignore          # 包含 md/ 目录
 ├── .gitmodules         # submodule 配置
-├── .workflow/
-│   └── deploy.yml      # 支持内容仓库同步
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  # 支持内容仓库同步
 ├── SETUP_GUIDE.md      # 配置指南
 ├── md/                 # 空目录（由 submodule 管理）
 ├── theme/
@@ -79,8 +80,9 @@ project/
 project/
 ├── .git/
 ├── .gitignore
-├── .workflow/
-│   └── deploy.yml      # 标准部署配置
+├── .github/
+│   └── workflows/
+│       └── deploy.yml  # 标准部署配置
 ├── md/
 │   └── welcome.md      # 示例文章
 ├── theme/

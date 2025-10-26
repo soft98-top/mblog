@@ -102,7 +102,7 @@ class ProjectInitializer:
         
         创建以下目录：
         - <project_name>/
-        - <project_name>/.workflow/
+        - <project_name>/.github/workflows/
         - <project_name>/md/
         - <project_name>/theme/
         - <project_name>/_mblog/
@@ -111,7 +111,7 @@ class ProjectInitializer:
         self.project_path.mkdir(parents=True, exist_ok=False)
         
         # 创建子目录
-        (self.project_path / ".workflow").mkdir(exist_ok=True)
+        (self.project_path / ".github" / "workflows").mkdir(parents=True, exist_ok=True)
         (self.project_path / "md").mkdir(exist_ok=True)
         (self.project_path / "theme").mkdir(exist_ok=True)
         (self.project_path / "_mblog").mkdir(exist_ok=True)
@@ -198,7 +198,7 @@ class ProjectInitializer:
         从模板生成 deploy.yml 文件，用于自动部署到 GitHub Pages。
         """
         template_path = self.templates_dir / "project" / "deploy.yml.template"
-        target_path = self.project_path / ".workflow" / "deploy.yml"
+        target_path = self.project_path / ".github" / "workflows" / "deploy.yml"
         
         if not template_path.exists():
             raise MblogError(f"deploy.yml 模板文件不存在: {template_path}")
@@ -222,7 +222,7 @@ class ProjectInitializer:
     def _create_separate_repo_workflow(self) -> None:
         """创建支持独立内容仓库的 GitHub Actions 工作流"""
         template_path = self.templates_dir / "project" / "deploy-dual-repo.yml.template"
-        target_path = self.project_path / ".workflow" / "deploy.yml"
+        target_path = self.project_path / ".github" / "workflows" / "deploy.yml"
         
         if not template_path.exists():
             raise MblogError(f"deploy-dual-repo.yml 模板文件不存在: {template_path}")
@@ -333,7 +333,8 @@ content_deploy_key.pub
             print(f"内容仓库: {self.content_repo_url}")
             print("\n项目结构:")
             print(f"  {self.project_name}/")
-            print("  ├── .workflow/       # GitHub Actions 自动部署配置")
+            print("  ├── .github/")
+            print("  │   └── workflows/   # GitHub Actions 自动部署配置")
             print("  ├── .gitmodules      # Git submodule 配置")
             print("  ├── md/              # 内容仓库（需要单独配置）")
             print("  ├── theme/           # 主题文件")
@@ -353,7 +354,8 @@ content_deploy_key.pub
             print("\n模式: 单仓库")
             print("\n项目结构:")
             print(f"  {self.project_name}/")
-            print("  ├── .workflow/       # GitHub Actions 自动部署配置")
+            print("  ├── .github/")
+            print("  │   └── workflows/   # GitHub Actions 自动部署配置")
             print("  ├── md/              # Markdown 文章目录")
             print("  ├── theme/           # 主题文件")
             print("  ├── _mblog/          # 生成运行时（独立运行）")
