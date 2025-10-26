@@ -464,3 +464,170 @@ class TestEdgeCases:
         
         assert result is True
         assert (nested_dir / project_name).exists()
+
+
+class TestSeparateContentRepo:
+    """测试独立内容仓库模式"""
+    
+    def test_creates_dual_repo_project(self, project_name, temp_dir):
+        """测试创建双仓库模式项目"""
+        content_repo_url = "git@github.com:test/content.git"
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=True,
+            content_repo_url=content_repo_url
+        )
+        result = initializer.create_project()
+        
+        assert result is True
+        assert initializer.project_path.exists()
+    
+    def test_dual_repo_creates_gitmodules(self, project_name, temp_dir):
+        """测试双仓库模式创建 .gitmodules 文件"""
+        content_repo_url = "git@github.com:test/content.git"
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=True,
+            content_repo_url=content_repo_url
+        )
+        initializer.create_project()
+        
+        gitmodules = initializer.project_path / ".gitmodules"
+        assert gitmodules.exists()
+        
+        content = gitmodules.read_text()
+        assert "[submodule \"md\"]" in content
+        assert content_repo_url in content
+    
+    def test_dual_repo_creates_setup_guide(self, project_name, temp_dir):
+        """测试双仓库模式创建设置指南"""
+        content_repo_url = "git@github.com:test/content.git"
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=True,
+            content_repo_url=content_repo_url
+        )
+        initializer.create_project()
+        
+        setup_guide = initializer.project_path / "SETUP_GUIDE.md"
+        assert setup_guide.exists()
+        
+        content = setup_guide.read_text()
+        assert "Deploy Key" in content
+        assert content_repo_url in content
+        assert "ssh-keygen" in content
+    
+    def test_dual_repo_creates_separate_workflow(self, project_name, temp_dir):
+        """测试双仓库模式创建独立的 workflow"""
+        content_repo_url = "git@github.com:test/content.git"
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=True,
+            content_repo_url=content_repo_url
+        )
+        initializer.create_project()
+        
+        workflow = initializer.project_path / ".workflow" / "deploy.yml"
+        assert workflow.exists()
+        
+        content = workflow.read_text()
+        assert "CONTENT_REPO_KEY" in content
+        assert "CONTENT_REPO_URL" in content
+        assert "schedule:" in content
+        assert "cron:" in content
+    
+    def test_dual_repo_no_sample_post(self, project_name, temp_dir):
+        """测试双仓库模式不创建示例文章"""
+        content_repo_url = "git@github.com:test/content.git"
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=True,
+            content_repo_url=content_repo_url
+        )
+        initializer.create_project()
+        
+        # md 目录应该存在但为空
+        md_dir = initializer.project_path / "md"
+        assert md_dir.exists()
+        assert len(list(md_dir.iterdir())) == 0
+    
+    def test_dual_repo_gitignore_includes_md(self, project_name, temp_dir):
+        """测试双仓库模式的 .gitignore 包含 md 目录"""
+        content_repo_url = "git@github.com:test/content.git"
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=True,
+            content_repo_url=content_repo_url
+        )
+        initializer.create_project()
+        
+        gitignore = initializer.project_path / ".gitignore"
+        assert gitignore.exists()
+        
+        content = gitignore.read_text()
+        assert "md/" in content
+        assert "content_deploy_key" in content
+    
+    def test_single_repo_has_sample_post(self, project_name, temp_dir):
+        """测试单仓库模式创建示例文章"""
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=False
+        )
+        initializer.create_project()
+        
+        sample_post = initializer.project_path / "md" / "welcome.md"
+        assert sample_post.exists()
+    
+    def test_single_repo_no_gitmodules(self, project_name, temp_dir):
+        """测试单仓库模式不创建 .gitmodules"""
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=False
+        )
+        initializer.create_project()
+        
+        gitmodules = initializer.project_path / ".gitmodules"
+        assert not gitmodules.exists()
+    
+    def test_single_repo_no_setup_guide(self, project_name, temp_dir):
+        """测试单仓库模式不创建设置指南"""
+        initializer = ProjectInitializer(
+            project_name, 
+            str(temp_dir),
+            use_separate_content_repo=False
+        )
+        initializer.create_project()
+        
+        setup_guide = initializer.project_path / "SETUP_GUIDE.md"
+        assert not setup_guide.exists()
+    
+    def test_git_repo_initialized(self, project_name, temp_dir):
+        """测试 Git 仓库被初始化"""
+        initializer = ProjectInitializer(project_name, str(temp_dir))
+        initializer.create_project()
+        
+        git_dir = initializer.project_path / ".git"
+        assert git_dir.exists()
+        assert git_dir.is_dir()
+    
+    def test_gitignore_created(self, project_name, temp_dir):
+        """测试 .gitignore 文件被创建"""
+        initializer = ProjectInitializer(project_name, str(temp_dir))
+        initializer.create_project()
+        
+        gitignore = initializer.project_path / ".gitignore"
+        assert gitignore.exists()
+        
+        content = gitignore.read_text()
+        assert "__pycache__" in content
+        assert "public/" in content
+        assert ".DS_Store" in content

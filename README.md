@@ -16,6 +16,7 @@
 - ⚙️ **配置驱动**：通过 JSON 配置文件灵活控制博客行为
 - 🔄 **完全独立**：生成的项目完全独立，不依赖 mblog 工具
 - 🤖 **自动部署**：内置 GitHub Actions 配置，自动构建和部署
+- 🔀 **双仓库模式**：支持内容与配置分离，自动同步部署
 
 ## 安装
 
@@ -41,6 +42,10 @@ pip install -e .
 ```bash
 mblog new my-blog
 ```
+
+在交互式提示中，你可以选择：
+- **单仓库模式**（默认）：所有内容在一个仓库中
+- **双仓库模式**：内容与配置分离，支持自动同步（详见[独立内容仓库文档](docs/separate-content-repo.md)）
 
 这将创建一个名为 `my-blog` 的目录，包含以下结构：
 
@@ -266,6 +271,8 @@ theme/
 - [配置文档](docs/configuration.md) - 详细的配置选项说明
 - [主题开发文档](docs/theme-development.md) - 如何创建自定义主题
 - [加密文章文档](docs/encrypted-posts.md) - 如何创建密码保护的文章
+- [独立内容仓库文档](docs/separate-content-repo.md) - 内容与配置分离的双仓库模式
+- [双仓库实战示例](docs/dual-repo-example.md) - 从零搭建团队博客的完整示例
 - [部署文档](docs/deployment.md) - 部署到各种平台的指南
 
 ## 项目结构
@@ -275,6 +282,16 @@ theme/
 - 你可以自由修改生成的代码
 - 不需要安装 mblog 工具就能生成静态文件
 - 所有生成逻辑都在 `_mblog/` 目录中
+
+## 模板系统
+
+mblog 使用模板系统生成项目文件，所有模板位于 `mblog/templates/project/` 目录：
+
+- 配置文件模板（config.json, requirements.txt 等）
+- 部署配置模板（单仓库和双仓库模式）
+- 文档模板（SETUP_GUIDE.md）
+
+模板支持变量替换，如 `{{CONTENT_REPO_URL}}` 和 `{{PROJECT_NAME}}`。详见 [模板系统文档](mblog/templates/project/README.md)。
 
 ## 依赖
 

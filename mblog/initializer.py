@@ -21,16 +21,22 @@ class ProjectInitializer:
     - 主题复制
     """
     
-    def __init__(self, project_name: str, target_dir: Optional[str] = None):
+    def __init__(self, project_name: str, target_dir: Optional[str] = None, 
+                 use_separate_content_repo: bool = False, 
+                 content_repo_url: Optional[str] = None):
         """初始化项目创建器
         
         Args:
             project_name: 项目名称
             target_dir: 目标目录，如果为 None 则使用当前目录
+            use_separate_content_repo: 是否使用独立的内容仓库
+            content_repo_url: 内容仓库的 URL（SSH 格式）
         """
         self.project_name = project_name
         self.target_dir = Path(target_dir) if target_dir else Path.cwd()
         self.project_path = self.target_dir / project_name
+        self.use_separate_content_repo = use_separate_content_repo
+        self.content_repo_url = content_repo_url
         
         # 获取 mblog 包的根目录
         self.mblog_root = Path(__file__).parent
@@ -63,11 +69,21 @@ class ProjectInitializer:
             self._create_gen_script()
             self._create_config_file()
             self._create_requirements_file()
-            self._create_sample_post()
-            self._create_workflow_file()
+            
+            # 根据模式创建内容
+            if self.use_separate_content_repo:
+                self._create_gitmodules_file()
+                self._create_separate_repo_workflow()
+                self._create_setup_guide()
+            else:
+                self._create_sample_post()
+                self._create_workflow_file()
             
             # 复制默认主题
             self._create_default_theme()
+            
+            # 初始化 Git 仓库
+            self._init_git_repo()
             
             return True
             
@@ -187,6 +203,99 @@ class ProjectInitializer:
         
         # 直接复制模板文件
         shutil.copy2(template_path, target_path)
+    
+    def _create_gitmodules_file(self) -> None:
+        """创建 .gitmodules 文件用于 submodule 配置"""
+        template_path = self.templates_dir / "project" / "gitmodules.template"
+        target_path = self.project_path / ".gitmodules"
+        
+        if not template_path.exists():
+            raise MblogError(f"gitmodules 模板文件不存在: {template_path}")
+        
+        # 读取模板并替换变量
+        template_content = template_path.read_text(encoding='utf-8')
+        content = template_content.replace('{{CONTENT_REPO_URL}}', self.content_repo_url)
+        target_path.write_text(content, encoding='utf-8')
+    
+    def _create_separate_repo_workflow(self) -> None:
+        """创建支持独立内容仓库的 GitHub Actions 工作流"""
+        template_path = self.templates_dir / "project" / "deploy-dual-repo.yml.template"
+        target_path = self.project_path / ".workflow" / "deploy.yml"
+        
+        if not template_path.exists():
+            raise MblogError(f"deploy-dual-repo.yml 模板文件不存在: {template_path}")
+        
+        # 直接复制模板文件（不需要变量替换）
+        shutil.copy2(template_path, target_path)
+    
+    def _create_setup_guide(self) -> None:
+        """创建独立内容仓库的设置指南"""
+        template_path = self.templates_dir / "project" / "SETUP_GUIDE.md.template"
+        target_path = self.project_path / "SETUP_GUIDE.md"
+        
+        if not template_path.exists():
+            raise MblogError(f"SETUP_GUIDE.md 模板文件不存在: {template_path}")
+        
+        # 读取模板并替换变量
+        template_content = template_path.read_text(encoding='utf-8')
+        content = template_content.replace('{{CONTENT_REPO_URL}}', self.content_repo_url)
+        content = content.replace('{{PROJECT_NAME}}', self.project_name)
+        target_path.write_text(content, encoding='utf-8')
+    
+    def _init_git_repo(self) -> None:
+        """初始化 Git 仓库"""
+        import subprocess
+        
+        try:
+            # 初始化 git 仓库
+            subprocess.run(
+                ["git", "init"],
+                cwd=self.project_path,
+                check=True,
+                capture_output=True
+            )
+            
+            # 创建 .gitignore
+            gitignore_content = """# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Generated files
+public/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+content_deploy_key
+content_deploy_key.pub
+"""
+            gitignore_path = self.project_path / ".gitignore"
+            gitignore_path.write_text(gitignore_content)
+            
+            # 如果使用独立内容仓库，添加 md 目录到 .gitignore
+            if self.use_separate_content_repo:
+                with open(gitignore_path, "a") as f:
+                    f.write("\n# Content repository (managed as submodule)\nmd/\n")
+            
+        except subprocess.CalledProcessError:
+            # Git 初始化失败不应该阻止项目创建
+            print("警告: Git 初始化失败，请手动运行 'git init'")
+        except FileNotFoundError:
+            print("警告: 未找到 git 命令，请确保已安装 Git")
 
     def _create_default_theme(self) -> None:
         """创建默认主题
@@ -216,23 +325,48 @@ class ProjectInitializer:
         """
         print(f"\n✓ 项目 '{self.project_name}' 创建成功！")
         print(f"\n项目位置: {self.project_path.absolute()}")
-        print("\n项目结构:")
-        print(f"  {self.project_name}/")
-        print("  ├── .workflow/       # GitHub Actions 自动部署配置")
-        print("  ├── md/              # Markdown 文章目录")
-        print("  ├── theme/           # 主题文件")
-        print("  ├── _mblog/          # 生成运行时（独立运行）")
-        print("  ├── gen.py           # 静态页面生成脚本")
-        print("  ├── config.json      # 博客配置文件")
-        print("  └── requirements.txt # Python 依赖")
-        print("\n下一步操作:")
-        print(f"  1. cd {self.project_name}")
-        print("  2. pip install -r requirements.txt  # 安装依赖")
-        print("  3. 在 md/ 目录中编写 Markdown 文章")
-        print("  4. python gen.py                    # 生成静态文件")
-        print("  5. 查看 public/ 目录中的生成结果")
-        print("\n提示:")
-        print("  - 编辑 config.json 自定义博客配置")
-        print("  - 修改 theme/ 目录自定义主题样式")
-        print("  - 推送到 GitHub 自动触发部署（需配置 GitHub Pages）")
+        
+        if self.use_separate_content_repo:
+            print("\n模式: 独立内容仓库")
+            print(f"内容仓库: {self.content_repo_url}")
+            print("\n项目结构:")
+            print(f"  {self.project_name}/")
+            print("  ├── .workflow/       # GitHub Actions 自动部署配置")
+            print("  ├── .gitmodules      # Git submodule 配置")
+            print("  ├── md/              # 内容仓库（需要单独配置）")
+            print("  ├── theme/           # 主题文件")
+            print("  ├── _mblog/          # 生成运行时")
+            print("  ├── gen.py           # 静态页面生成脚本")
+            print("  ├── config.json      # 博客配置文件")
+            print("  ├── SETUP_GUIDE.md   # 详细配置指南")
+            print("  └── requirements.txt # Python 依赖")
+            print("\n⚠️  重要：下一步操作")
+            print(f"  1. cd {self.project_name}")
+            print("  2. 阅读 SETUP_GUIDE.md 完成配置")
+            print("  3. 生成并配置 SSH Deploy Key")
+            print("  4. 在 GitHub 配置 Secrets")
+            print("  5. 推送代码到 GitHub")
+            print("\n配置完成后，内容仓库的更新会自动触发博客部署！")
+        else:
+            print("\n模式: 单仓库")
+            print("\n项目结构:")
+            print(f"  {self.project_name}/")
+            print("  ├── .workflow/       # GitHub Actions 自动部署配置")
+            print("  ├── md/              # Markdown 文章目录")
+            print("  ├── theme/           # 主题文件")
+            print("  ├── _mblog/          # 生成运行时（独立运行）")
+            print("  ├── gen.py           # 静态页面生成脚本")
+            print("  ├── config.json      # 博客配置文件")
+            print("  └── requirements.txt # Python 依赖")
+            print("\n下一步操作:")
+            print(f"  1. cd {self.project_name}")
+            print("  2. pip install -r requirements.txt  # 安装依赖")
+            print("  3. 在 md/ 目录中编写 Markdown 文章")
+            print("  4. python gen.py                    # 生成静态文件")
+            print("  5. 查看 public/ 目录中的生成结果")
+            print("\n提示:")
+            print("  - 编辑 config.json 自定义博客配置")
+            print("  - 修改 theme/ 目录自定义主题样式")
+            print("  - 推送到 GitHub 自动触发部署（需配置 GitHub Pages）")
+        
         print("\n开始写作吧！✨\n")

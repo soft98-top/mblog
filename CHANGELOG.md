@@ -4,6 +4,17 @@
 
 ### 新增功能
 
+#### 双仓库模式 🔀
+- 支持将博客内容与配置分离到不同的 Git 仓库
+- 交互式初始化，可选择单仓库或双仓库模式
+- 使用 SSH Deploy Key 安全访问内容仓库
+- 自动生成 GitHub Actions workflow 支持定时同步
+- 内容仓库更新后自动触发博客重新部署
+- 适合团队协作和内容管理分离的场景
+- 自动生成详细的配置指南（SETUP_GUIDE.md）
+- 自动初始化 Git 仓库并配置 .gitignore
+- 详细文档：[独立内容仓库文档](docs/separate-content-repo.md)
+
 #### 文章加密功能 🔒
 - 支持密码保护的私密文章
 - 在 frontmatter 中配置 `encrypted: true` 和 `password` 即可加密
@@ -50,6 +61,20 @@
 
 ### 改进
 
+#### CLI 交互增强
+- 新增交互式项目初始化流程
+- 支持选择单仓库或双仓库模式
+- 自动验证内容仓库 URL 格式
+- 根据选择的模式生成不同的项目结构和配置
+
+#### 项目初始化器增强
+- `ProjectInitializer` 支持双仓库模式参数
+- 自动生成 .gitmodules 文件
+- 自动生成双仓库模式的 GitHub Actions workflow
+- 自动生成配置指南文档
+- 自动初始化 Git 仓库
+- 根据模式自动配置 .gitignore
+
 #### 主题系统增强
 - 所有模板获取统一通过 `theme.get_template()` 方法
 - 模板配置完全由 `theme.json` 控制，不再使用硬编码的文件名
@@ -91,11 +116,13 @@
 
 ### 文档更新
 
-- 更新 README.md，添加加密功能说明
+- 更新 README.md，添加双仓库模式和加密功能说明
+- 新增 docs/separate-content-repo.md，完整的双仓库模式文档
 - 新增 docs/encrypted-posts.md，完整的加密功能使用文档
 - 更新 docs/theme-development.md，添加加密模板开发指南
 - 更新 docs/configuration.md，添加新配置项说明和多级目录使用指南
 - 更新 CHANGELOG.md 记录版本变更
+- 自动生成的项目包含 SETUP_GUIDE.md（双仓库模式）
 
 ### 技术改进
 
@@ -106,6 +133,10 @@
 - `Theme` 类新增 `has_template()` 方法
 - `Renderer` 类新增加密相关方法
 - 默认主题新增 `encrypted_post.html` 模板和 `crypto.js` 脚本
+- 双仓库模式相关内容抽离到模板文件，避免硬编码
+  - `deploy-dual-repo.yml.template` - 双仓库 workflow 模板
+  - `gitmodules.template` - Git submodule 配置模板
+  - `SETUP_GUIDE.md.template` - 配置指南模板
 
 ## 升级指南
 

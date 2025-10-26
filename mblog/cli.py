@@ -125,8 +125,49 @@ class MblogCLI:
             int: 退出码，0 表示成功，非 0 表示失败
         """
         try:
+            # 询问是否使用独立内容仓库
+            print("\n欢迎使用 mblog！")
+            print("\n请选择博客模式：")
+            print("  1. 单仓库模式（默认）- 所有内容在一个仓库中")
+            print("  2. 双仓库模式 - 内容与配置分离，支持自动同步")
+            
+            while True:
+                choice = input("\n请选择 [1/2] (默认: 1): ").strip() or "1"
+                if choice in ["1", "2"]:
+                    break
+                print("无效选择，请输入 1 或 2")
+            
+            use_separate_content_repo = (choice == "2")
+            content_repo_url = None
+            
+            if use_separate_content_repo:
+                print("\n双仓库模式说明：")
+                print("  - 博客配置、主题在主仓库")
+                print("  - Markdown 文章在独立的内容仓库")
+                print("  - 内容更新自动触发博客重新部署")
+                print("  - 适合团队协作和内容管理分离")
+                
+                while True:
+                    content_repo_url = input("\n请输入内容仓库的 SSH URL (例如: git@github.com:user/content.git): ").strip()
+                    if content_repo_url:
+                        # 简单验证 SSH URL 格式
+                        if content_repo_url.startswith("git@") and content_repo_url.endswith(".git"):
+                            break
+                        else:
+                            print("⚠️  URL 格式可能不正确，请使用 SSH 格式 (git@github.com:user/repo.git)")
+                            confirm = input("是否继续使用此 URL？[y/N]: ").strip().lower()
+                            if confirm == 'y':
+                                break
+                    else:
+                        print("内容仓库 URL 不能为空")
+            
             # 创建项目初始化器
-            initializer = ProjectInitializer(project_name, target_dir)
+            initializer = ProjectInitializer(
+                project_name, 
+                target_dir,
+                use_separate_content_repo=use_separate_content_repo,
+                content_repo_url=content_repo_url
+            )
             
             # 执行项目创建
             initializer.create_project()
