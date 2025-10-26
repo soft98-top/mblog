@@ -7,6 +7,7 @@
     <meta name="author" content="{{ site.author }}">
     <title>{% block title %}{{ site.title }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for_static('css/style.css') }}">
+    <link rel="alternate" type="application/rss+xml" title="{{ site.title }} RSS Feed" href="/rss.xml">
     {% block extra_head %}{% endblock %}
 </head>
 <body>

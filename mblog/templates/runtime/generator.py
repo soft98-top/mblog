@@ -111,6 +111,8 @@ class StaticGenerator:
         - 文章详情页
         - 标签页
         - 归档页（可选）
+        - RSS 订阅（可选）
+        - Sitemap（可选）
         """
         print("开始生成页面...")
         
@@ -125,6 +127,14 @@ class StaticGenerator:
         
         # 生成归档页（可选）
         self._generate_archive_page()
+        
+        # 生成 RSS 订阅（可选）
+        if self.config.get('build.generate_rss', True):
+            self._generate_rss()
+        
+        # 生成 Sitemap（可选）
+        if self.config.get('build.generate_sitemap', True):
+            self._generate_sitemap()
         
         print(f"✓ 所有页面生成完成")
     
@@ -282,3 +292,154 @@ class StaticGenerator:
             safe_name = 'tag'
         
         return safe_name
+    
+    def _generate_rss(self) -> None:
+        """
+        生成 RSS 订阅文件
+        
+        生成符合 RSS 2.0 标准的 XML 文件
+        """
+        try:
+            from datetime import datetime
+            import html
+            
+            site_config = self.config.get_site_config()
+            site_url = site_config.get('url', 'https://example.com').rstrip('/')
+            
+            # RSS 头部
+            rss_lines = [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+                '<channel>',
+                f'  <title>{html.escape(site_config.get("title", "博客"))}</title>',
+                f'  <link>{html.escape(site_url)}</link>',
+                f'  <description>{html.escape(site_config.get("description", ""))}</description>',
+                f'  <language>{site_config.get("language", "zh-CN")}</language>',
+                f'  <atom:link href="{html.escape(site_url)}/rss.xml" rel="self" type="application/rss+xml" />',
+            ]
+            
+            # 添加文章（最多 20 篇）
+            for post in self.posts[:20]:
+                post_url = f'{site_url}/posts/{post.relative_path}.html'
+                pub_date = post.date.strftime('%a, %d %b %Y %H:%M:%S +0000')
+                
+                # 清理 HTML 内容作为描述
+                description = post.description or post.html[:200]
+                
+                rss_lines.extend([
+                    '  <item>',
+                    f'    <title>{html.escape(post.title)}</title>',
+                    f'    <link>{html.escape(post_url)}</link>',
+                    f'    <description>{html.escape(description)}</description>',
+                    f'    <pubDate>{pub_date}</pubDate>',
+                    f'    <guid>{html.escape(post_url)}</guid>',
+                ])
+                
+                # 添加分类（标签）
+                for tag in post.tags:
+                    rss_lines.append(f'    <category>{html.escape(tag)}</category>')
+                
+                rss_lines.append('  </item>')
+            
+            rss_lines.extend([
+                '</channel>',
+                '</rss>'
+            ])
+            
+            # 写入文件
+            rss_content = '\n'.join(rss_lines)
+            rss_path = self.output_dir / 'rss.xml'
+            self._write_file(rss_path, rss_content)
+            
+            print(f"  ✓ RSS 订阅: rss.xml")
+        except Exception as e:
+            print(f"  跳过 RSS 生成: {e}")
+    
+    def _generate_sitemap(self) -> None:
+        """
+        生成 Sitemap 文件
+        
+        生成符合 Sitemap 协议的 XML 文件
+        """
+        try:
+            from datetime import datetime
+            import html
+            
+            site_config = self.config.get_site_config()
+            site_url = site_config.get('url', 'https://example.com').rstrip('/')
+            
+            # Sitemap 头部
+            sitemap_lines = [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+            ]
+            
+            # 首页
+            sitemap_lines.extend([
+                '  <url>',
+                f'    <loc>{html.escape(site_url)}/</loc>',
+                f'    <lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod>',
+                '    <changefreq>daily</changefreq>',
+                '    <priority>1.0</priority>',
+                '  </url>',
+            ])
+            
+            # 归档页
+            sitemap_lines.extend([
+                '  <url>',
+                f'    <loc>{html.escape(site_url)}/archive.html</loc>',
+                f'    <lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod>',
+                '    <changefreq>weekly</changefreq>',
+                '    <priority>0.8</priority>',
+                '  </url>',
+            ])
+            
+            # 标签索引页
+            sitemap_lines.extend([
+                '  <url>',
+                f'    <loc>{html.escape(site_url)}/tags/</loc>',
+                f'    <lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod>',
+                '    <changefreq>weekly</changefreq>',
+                '    <priority>0.8</priority>',
+                '  </url>',
+            ])
+            
+            # 所有文章
+            for post in self.posts:
+                post_url = f'{site_url}/posts/{post.relative_path}.html'
+                lastmod = post.date.strftime('%Y-%m-%d')
+                
+                sitemap_lines.extend([
+                    '  <url>',
+                    f'    <loc>{html.escape(post_url)}</loc>',
+                    f'    <lastmod>{lastmod}</lastmod>',
+                    '    <changefreq>monthly</changefreq>',
+                    '    <priority>0.6</priority>',
+                    '  </url>',
+                ])
+            
+            # 所有标签页
+            tags_map = self.renderer.get_all_tags(self.posts)
+            for tag in tags_map.keys():
+                tag_filename = self._sanitize_filename(tag)
+                tag_url = f'{site_url}/tags/{tag_filename}.html'
+                
+                sitemap_lines.extend([
+                    '  <url>',
+                    f'    <loc>{html.escape(tag_url)}</loc>',
+                    f'    <lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod>',
+                    '    <changefreq>weekly</changefreq>',
+                    '    <priority>0.5</priority>',
+                    '  </url>',
+                ])
+            
+            sitemap_lines.append('</urlset>')
+            
+            # 写入文件
+            sitemap_content = '\n'.join(sitemap_lines)
+            sitemap_path = self.output_dir / 'sitemap.xml'
+            self._write_file(sitemap_path, sitemap_content)
+            
+            print(f"  ✓ Sitemap: sitemap.xml")
+        except Exception as e:
+            print(f"  跳过 Sitemap 生成: {e}")
