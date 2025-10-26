@@ -96,12 +96,28 @@ class Theme:
         
         return True
     
+    def has_template(self, template_name: str) -> bool:
+        """
+        检查主题是否配置了指定的模板
+        
+        Args:
+            template_name: 模板名称（如 'index', 'post', 'encrypted_post'）
+            
+        Returns:
+            是否配置了该模板
+        """
+        if not self._loaded:
+            return False
+        
+        templates_config = self._metadata.get('templates', {})
+        return template_name in templates_config
+    
     def get_template(self, template_name: str) -> str:
         """
         获取模板文件路径
         
         Args:
-            template_name: 模板名称（如 'index.html', 'post.html'）
+            template_name: 模板名称（如 'index', 'post', 'encrypted_post'）
             
         Returns:
             模板文件的绝对路径字符串
@@ -115,12 +131,11 @@ class Theme:
         # 检查元数据中是否有模板映射
         templates_config = self._metadata.get('templates', {})
         
-        # 如果元数据中定义了映射，使用映射的文件名
-        if template_name in templates_config:
-            actual_filename = templates_config[template_name]
-        else:
-            # 否则直接使用传入的名称
-            actual_filename = template_name
+        # 必须在配置中定义
+        if template_name not in templates_config:
+            raise ThemeError(f"主题未配置模板: {template_name}")
+        
+        actual_filename = templates_config[template_name]
         
         # 确保文件名有 .html 扩展名
         if not actual_filename.endswith('.html'):

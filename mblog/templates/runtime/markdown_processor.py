@@ -25,6 +25,8 @@ class Post:
     tags: List[str]            # 标签
     content: str               # 原始 Markdown
     html: str                  # 转换后的 HTML
+    encrypted: bool = False    # 是否加密
+    password: str = ""         # 加密密码
     metadata: Dict[str, Any] = field(default_factory=dict)  # 其他元数据
 
 
@@ -132,6 +134,10 @@ class MarkdownProcessor:
         # 计算相对路径（相对于 md 目录，不含扩展名）
         relative_path = self._get_relative_path(filepath_obj)
         
+        # 提取加密相关字段
+        encrypted = metadata.get('encrypted', False)
+        password = metadata.get('password', '')
+        
         # 创建 Post 对象
         post = Post(
             filepath=str(filepath_obj),
@@ -144,6 +150,8 @@ class MarkdownProcessor:
             tags=tags,
             content=content,
             html=html,
+            encrypted=encrypted,
+            password=password,
             metadata=metadata
         )
         

@@ -798,12 +798,56 @@ python gen.py --config custom-config.json
 }
 ```
 
+## 文章加密配置
+
+mblog 支持在文章级别配置加密，无需修改全局配置。
+
+### 加密文章 Frontmatter
+
+在 Markdown 文件的 frontmatter 中添加加密配置：
+
+```markdown
+---
+title: "私密文章"
+date: 2025-10-26
+encrypted: true
+password: "your-secret-password"
+---
+
+文章内容...
+```
+
+### 加密配置字段
+
+#### encrypted
+
+- **类型**：`boolean`
+- **默认值**：`false`
+- **说明**：是否加密此文章
+
+#### password
+
+- **类型**：`string`
+- **必需**：当 `encrypted: true` 时必需
+- **说明**：访问文章所需的密码
+
+### 加密功能说明
+
+- 加密在生成时进行，内容以加密形式存储在 HTML 中
+- 访客需要输入正确密码才能在浏览器中解密查看
+- 密码存储在 Markdown 源文件中，便于管理
+- 主题需要支持 `encrypted_post` 模板才能提供最佳体验
+- 不支持加密的主题会显示提示信息
+
+详细说明请参考 [加密文章文档](encrypted-posts.md)。
+
 ## 参考
 
 - [JSON 格式规范](https://www.json.org/)
 - [Python strftime 格式](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes)
 - [语言代码列表](https://www.w3.org/International/O-charset-lang.html)
 - [时区列表](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+- [加密文章文档](encrypted-posts.md)
 
 ---
 

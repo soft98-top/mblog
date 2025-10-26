@@ -10,6 +10,7 @@
 - 📁 **目录结构**：支持多级目录组织文章，保持原有结构
 - 🏷️ **标签系统**：自动生成标签页和标签云
 - 📚 **归档页面**：按年份和月份组织的文章归档
+- 🔒 **文章加密**：支持密码保护的私密文章
 - 📡 **RSS 订阅**：自动生成 RSS 2.0 订阅源
 - 🗺️ **Sitemap**：自动生成搜索引擎友好的站点地图
 - ⚙️ **配置驱动**：通过 JSON 配置文件灵活控制博客行为
@@ -112,6 +113,24 @@ description: "这是我的第一篇博客文章"
 
 生成的文章会保持目录结构：
 - `md/tech/python-tips.md` → `public/posts/tech/python-tips.html`
+
+**加密文章：**
+
+如果你想创建需要密码才能查看的私密文章，只需在 frontmatter 中添加加密配置：
+
+```markdown
+---
+title: "我的私密日记"
+date: 2025-10-26
+tags: ["私密"]
+encrypted: true
+password: "my-secret-password"
+---
+
+这是只有知道密码的人才能看到的内容...
+```
+
+详细说明请参考 [加密文章文档](docs/encrypted-posts.md)。
 
 ### 5. 生成静态文件
 
@@ -246,6 +265,7 @@ theme/
 
 - [配置文档](docs/configuration.md) - 详细的配置选项说明
 - [主题开发文档](docs/theme-development.md) - 如何创建自定义主题
+- [加密文章文档](docs/encrypted-posts.md) - 如何创建密码保护的文章
 - [部署文档](docs/deployment.md) - 部署到各种平台的指南
 
 ## 项目结构
@@ -319,6 +339,10 @@ MIT License
 ### RSS 订阅地址是什么？
 
 生成的 RSS 文件位于 `public/rss.xml`，访问地址为 `https://your-site.com/rss.xml`。
+
+### 如何创建加密文章？
+
+在文章的 frontmatter 中添加 `encrypted: true` 和 `password: "密码"`，详见 [加密文章文档](docs/encrypted-posts.md)。
 
 ### 如何添加自定义页面？
 

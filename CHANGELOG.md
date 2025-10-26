@@ -4,6 +4,16 @@
 
 ### 新增功能
 
+#### 文章加密功能 🔒
+- 支持密码保护的私密文章
+- 在 frontmatter 中配置 `encrypted: true` 和 `password` 即可加密
+- 客户端解密，无需服务器支持
+- 主题可选支持，向后兼容
+- 默认主题已包含加密模板和解密脚本
+- 自动密码记忆（使用 sessionStorage）
+- 优雅的密码输入界面
+- 详细文档：[加密文章文档](docs/encrypted-posts.md)
+
 #### 多级目录支持
 - 支持在 `md/` 目录下使用多级目录组织文章
 - 生成的 HTML 文件保持原始目录结构
@@ -40,6 +50,23 @@
 
 ### 改进
 
+#### 主题系统增强
+- 所有模板获取统一通过 `theme.get_template()` 方法
+- 模板配置完全由 `theme.json` 控制，不再使用硬编码的文件名
+- 新增 `theme.has_template()` 方法检测主题是否支持特定模板
+- 支持可选的 `encrypted_post` 模板
+
+#### 数据模型扩展
+- `Post` 类新增 `encrypted` 字段（布尔值）
+- `Post` 类新增 `password` 字段（字符串）
+- 自动从 frontmatter 提取加密配置
+
+#### 渲染器增强
+- 新增 `_encrypt_content()` 方法用于内容加密
+- 新增 `_simple_hash()` 方法用于密码哈希
+- `render_post()` 方法支持加密文章渲染逻辑
+- 根据主题支持情况自动选择合适的渲染方式
+
 #### 配置系统
 - 在 `build` 部分新增 `generate_rss` 配置项（默认 true）
 - 在 `build` 部分新增 `generate_sitemap` 配置项（默认 true）
@@ -64,17 +91,21 @@
 
 ### 文档更新
 
-- 更新 README.md，添加新功能说明
+- 更新 README.md，添加加密功能说明
+- 新增 docs/encrypted-posts.md，完整的加密功能使用文档
+- 更新 docs/theme-development.md，添加加密模板开发指南
 - 更新 docs/configuration.md，添加新配置项说明和多级目录使用指南
-- 更新 docs/theme-development.md，添加新模板和 `relative_path` 字段说明
-- 新增 CHANGELOG.md 记录版本变更
+- 更新 CHANGELOG.md 记录版本变更
 
 ### 技术改进
 
 - `MarkdownProcessor.load_posts()` 使用 `rglob()` 递归扫描所有子目录
-- `Post` 数据模型新增 `relative_path` 字段
+- `Post` 数据模型新增 `relative_path`、`encrypted`、`password` 字段
 - `StaticGenerator` 新增 `_generate_rss()` 和 `_generate_sitemap()` 方法
 - 生成器在输出文章时保持目录结构
+- `Theme` 类新增 `has_template()` 方法
+- `Renderer` 类新增加密相关方法
+- 默认主题新增 `encrypted_post.html` 模板和 `crypto.js` 脚本
 
 ## 升级指南
 
@@ -117,9 +148,18 @@
 
 4. **添加新模板文件**
    
-   从默认主题复制 `archive.html` 和 `tags.html` 到你的主题目录。
+   从默认主题复制 `archive.html`、`tags.html` 和 `encrypted_post.html`（可选）到你的主题目录。
 
-5. **重新生成博客**
+5. **支持加密功能（可选）**
+   
+   如果想支持加密文章，需要：
+   - 在 `theme.json` 中添加 `"encrypted_post": "encrypted_post.html"`
+   - 创建 `encrypted_post.html` 模板
+   - 创建 `static/js/crypto.js` 解密脚本
+   
+   详见 [加密文章文档](docs/encrypted-posts.md)。
+
+6. **重新生成博客**
    
    ```bash
    python gen.py

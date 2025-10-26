@@ -221,6 +221,11 @@ mblog 使用 Jinja2 作为模板引擎。所有模板都可以使用 Jinja2 的�
 
 - `post`：当前文章对象（Post）
 
+**Post 对象的加密相关属性：**
+
+- `post.encrypted`：是否为加密文章（布尔值）
+- `post.password`：加密密码（字符串）
+
 **示例：**
 
 ```html
@@ -270,6 +275,168 @@ mblog 使用 Jinja2 作为模板引擎。所有模板都可以使用 Jinja2 的�
 ```
 
 **重要：** 使用 `| safe` 过滤器来渲染 HTML 内容，因为 `post.html` 已经是安全的 HTML。
+
+### 加密文章模板 (encrypted_post.html)
+
+加密文章模板用于显示需要密码才能查看的文章。这是一个可选模板，如果主题不支持，系统会自动降级到普通文章模板并显示提示信息。
+
+**配置方式：**
+
+在 `theme.json` 中添加加密模板配置：
+
+```json
+{
+  "templates": {
+    "base": "base.html",
+    "index": "index.html",
+    "post": "post.html",
+    "encrypted_post": "encrypted_post.html"
+  }
+}
+```
+
+**可用变量：**
+
+- `post`：当前文章对象（Post）
+- `post.html`：加密后的内容（Base64 编码，格式为 `iv:encrypted_data`）
+- `post.encrypted`：始终为 `true`
+- `post.password`：加密密码（用于服务端加密，不应在模板中显示）
+
+**工作原理：**
+
+1. 用户在 Markdown 文件的 frontmatter 中配置加密：
+   ```yaml
+   ---
+   title: 私密文章
+   encrypted: true
+   password: "my-secret"
+   ---
+   ```
+
+2. 系统在渲染前使用密码加密文章内容
+3. 加密后的内容传递给模板
+4. 模板显示密码输入框
+5. 用户输入密码后，JavaScript 在客户端解密并显示内容
+
+**示例模板：**
+
+```html
+{% extends "base.html" %}
+
+{% block title %}🔒 {{ post.title }} - {{ site.title }}{% endblock %}
+
+{% block content %}
+<article class="post encrypted-post">
+    <header class="post-header">
+        <h1>🔒 {{ post.title }}</h1>
+        <div class="post-meta">
+            <time>{{ post.date.strftime('%Y-%m-%d') }}</time>
+            {% if post.author %}
+            <span>{{ post.author }}</span>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="encrypted-wrapper">
+        <!-- 密码输入表单 -->
+        <div id="password-form" class="password-form">
+            <p>此文章已加密，请输入密码查看</p>
+            <input type="password" id="password-input" placeholder="请输入密码" />
+            <button id="decrypt-btn">解锁</button>
+            <p id="error-msg" class="error" style="display:none;"></p>
+        </div>
+
+        <!-- 解密后的内容容器 -->
+        <div id="decrypted-content" class="post-content" style="display:none;"></div>
+
+        <!-- 隐藏的加密数据 -->
+        <div id="encrypted-data" data-encrypted="{{ post.html }}" style="display:none;"></div>
+    </div>
+</article>
+
+<!-- 引入解密脚本 -->
+<script src="{{ url_for_static('js/crypto.js') }}"></script>
+<script>
+document.getElementById('decrypt-btn').addEventListener('click', function() {
+    const password = document.getElementById('password-input').value;
+    const encryptedData = document.getElementById('encrypted-data').dataset.encrypted;
+    
+    try {
+        const decrypted = decryptContent(encryptedData, password);
+        document.getElementById('password-form').style.display = 'none';
+        document.getElementById('decrypted-content').innerHTML = decrypted;
+        document.getElementById('decrypted-content').style.display = 'block';
+    } catch (e) {
+        document.getElementById('error-msg').textContent = '密码错误';
+        document.getElementById('error-msg').style.display = 'block';
+    }
+});
+</script>
+{% endblock %}
+```
+
+**客户端解密脚本 (crypto.js)：**
+
+主题需要提供 `static/js/crypto.js` 文件实现 `decryptContent()` 函数。默认主题已包含参考实现。
+
+**关键函数：**
+
+```javascript
+/**
+ * 解密内容
+ * @param {string} encryptedData - 加密数据（格式: iv:encrypted_data）
+ * @param {string} password - 密码
+ * @returns {string} 解密后的 HTML 内容
+ * @throws {Error} 密码错误时抛出异常
+ */
+function decryptContent(encryptedData, password) {
+    // 实现解密逻辑
+    // 参考默认主题的 crypto.js
+}
+```
+
+**样式建议：**
+
+```css
+.encrypted-wrapper {
+    max-width: 500px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.password-form {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.password-form input {
+    padding: 0.5rem;
+    width: 200px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.password-form button {
+    padding: 0.5rem 1rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.error {
+    color: #dc3545;
+    margin-top: 0.5rem;
+}
+```
+
+**注意事项：**
+
+1. 加密是在客户端进行的，密码会暴露在生成的 HTML 中（虽然经过加密）
+2. 这种加密方式适合防止搜索引擎索引和普通访客查看，不适合高安全性需求
+3. 如果主题不提供 `encrypted_post` 模板，系统会自动使用普通 `post` 模板并显示"当前主题不支持加密文章"的提示
 
 ### 归档页模板 (archive.html)
 

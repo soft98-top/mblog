@@ -5,6 +5,9 @@
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from copy import copy
+import base64
+import os
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 from .config import Config
@@ -95,6 +98,67 @@ class Renderer:
         
         self.env.globals['url_for_static'] = url_for_static
     
+    def _simple_hash(self, password: str) -> bytes:
+        """
+        简单哈希函数（与 JS 端匹配）
+        
+        Args:
+            password: 密码
+            
+        Returns:
+            32 字节的哈希值
+        """
+        data = password.encode('utf-8')
+        hash_bytes = bytearray(32)
+        
+        # 简单的哈希算法
+        for i in range(len(data)):
+            hash_bytes[i % 32] ^= data[i]
+            hash_bytes[(i + 1) % 32] ^= ((data[i] << 1) | (data[i] >> 7)) & 0xFF
+        
+        # 多次混合
+        for _ in range(3):
+            for i in range(32):
+                hash_bytes[i] ^= hash_bytes[(i + 7) % 32]
+                hash_bytes[i] = ((hash_bytes[i] << 3) | (hash_bytes[i] >> 5)) & 0xFF
+        
+        return bytes(hash_bytes)
+    
+    def _encrypt_content(self, content: str, password: str) -> str:
+        """
+        使用简化的 XOR 加密内容（与 JS 端匹配）
+        
+        Args:
+            content: 要加密的内容
+            password: 密码
+            
+        Returns:
+            Base64 编码的加密数据（格式: iv:encrypted_data）
+        """
+        # 生成密钥
+        key = self._simple_hash(password)
+        
+        # 生成随机 IV
+        iv = os.urandom(16)
+        
+        # 转换内容为字节
+        content_bytes = content.encode('utf-8')
+        
+        # 添加 PKCS7 填充
+        padding_length = 16 - (len(content_bytes) % 16)
+        padded_content = content_bytes + bytes([padding_length] * padding_length)
+        
+        # XOR 加密
+        encrypted = bytearray(len(padded_content))
+        for i in range(len(padded_content)):
+            encrypted[i] = padded_content[i] ^ key[i % len(key)] ^ iv[i % len(iv)]
+        
+        # 返回 Base64 编码的 iv:encrypted_data
+        iv_b64 = base64.b64encode(iv).decode('utf-8')
+        encrypted_b64 = base64.b64encode(bytes(encrypted)).decode('utf-8')
+        
+        return f"{iv_b64}:{encrypted_b64}"
+    
     def render_index(self, posts: List[Post], page: int = 1, 
                     posts_per_page: Optional[int] = None) -> str:
         """
@@ -112,9 +176,10 @@ class Renderer:
             RendererError: 渲染失败
         """
         try:
-            template = self.env.get_template('index.html')
-        except TemplateNotFound:
-            raise RendererError("找不到首页模板: index.html")
+            template_path = self.theme.get_template('index')
+            template = self.env.get_template(Path(template_path).name)
+        except Exception as e:
+            raise RendererError(f"无法加载首页模板: {e}")
         
         # 处理分页
         pagination = None
@@ -158,12 +223,53 @@ class Renderer:
         Raises:
             RendererError: 渲染失败
         """
-        try:
-            template = self.env.get_template('post.html')
-        except TemplateNotFound:
-            raise RendererError("找不到文章模板: post.html")
+        # 检查文章是否加密
+        if post.encrypted and post.password:
+            # 检查主题是否支持加密模板
+            if self.theme.has_template('encrypted_post'):
+                # 主题支持加密 - 加密内容并使用加密模板
+                try:
+                    encrypted_html = self._encrypt_content(post.html, post.password)
+                    
+                    # 使用加密模板渲染，传递加密后的内容
+                    template_path = self.theme.get_template('encrypted_post')
+                    template = self.env.get_template(Path(template_path).name)
+                    
+                    # 创建一个包含加密内容的上下文
+                    context = {
+                        'post': post,
+                        'encrypted_html': encrypted_html
+                    }
+                    
+                    # 临时替换 post.html 为加密内容
+                    original_html = post.html
+                    post.html = encrypted_html
+                    html = template.render(post=post)
+                    post.html = original_html  # 恢复原始内容
+                    
+                    return html
+                except Exception as e:
+                    raise RendererError(f"渲染加密文章失败: {e}")
+            else:
+                # 主题不支持加密 - 显示提示信息
+                try:
+                    template_path = self.theme.get_template('post')
+                    template = self.env.get_template(Path(template_path).name)
+                    
+                    # 临时替换内容为提示信息
+                    original_html = post.html
+                    post.html = '<div class="encrypted-notice"><p>⚠️ 当前主题不支持加密文章功能</p><p>请更换支持加密的主题或联系主题开发者添加加密模板支持。</p></div>'
+                    html = template.render(post=post)
+                    post.html = original_html  # 恢复原始内容
+                    
+                    return html
+                except Exception as e:
+                    raise RendererError(f"渲染文章页失败: {e}")
         
+        # 普通文章 - 正常渲染
         try:
+            template_path = self.theme.get_template('post')
+            template = self.env.get_template(Path(template_path).name)
             html = template.render(post=post)
             return html
         except Exception as e:
@@ -184,14 +290,15 @@ class Renderer:
         Raises:
             RendererError: 渲染失败
         """
+        # 尝试使用归档模板，如果不存在则使用首页模板
         try:
-            template = self.env.get_template('archive.html')
-        except TemplateNotFound:
-            # 如果没有专门的归档模板，使用首页模板
-            try:
-                template = self.env.get_template('index.html')
-            except TemplateNotFound:
-                raise RendererError("找不到归档模板: archive.html 或 index.html")
+            if self.theme.has_template('archive'):
+                template_path = self.theme.get_template('archive')
+            else:
+                template_path = self.theme.get_template('index')
+            template = self.env.get_template(Path(template_path).name)
+        except Exception as e:
+            raise RendererError(f"无法加载归档模板: {e}")
         
         # 按年份和月份组织文章
         archive_data = self._organize_posts_by_date(posts)
@@ -222,14 +329,15 @@ class Renderer:
         Raises:
             RendererError: 渲染失败
         """
+        # 尝试使用标签模板，如果不存在则使用首页模板
         try:
-            template = self.env.get_template('tag.html')
-        except TemplateNotFound:
-            # 如果没有专门的标签模板，使用首页模板
-            try:
-                template = self.env.get_template('index.html')
-            except TemplateNotFound:
-                raise RendererError("找不到标签模板: tag.html 或 index.html")
+            if self.theme.has_template('tag'):
+                template_path = self.theme.get_template('tag')
+            else:
+                template_path = self.theme.get_template('index')
+            template = self.env.get_template(Path(template_path).name)
+        except Exception as e:
+            raise RendererError(f"无法加载标签模板: {e}")
         
         try:
             html = template.render(
@@ -256,14 +364,15 @@ class Renderer:
         Raises:
             RendererError: 渲染失败
         """
+        # 尝试使用标签索引模板，如果不存在则使用首页模板
         try:
-            template = self.env.get_template('tags.html')
-        except TemplateNotFound:
-            # 如果没有专门的标签索引模板，使用首页模板
-            try:
-                template = self.env.get_template('index.html')
-            except TemplateNotFound:
-                raise RendererError("找不到标签索引模板: tags.html 或 index.html")
+            if self.theme.has_template('tags'):
+                template_path = self.theme.get_template('tags')
+            else:
+                template_path = self.theme.get_template('index')
+            template = self.env.get_template(Path(template_path).name)
+        except Exception as e:
+            raise RendererError(f"无法加载标签索引模板: {e}")
         
         # 准备标签统计数据
         tags_stats = [

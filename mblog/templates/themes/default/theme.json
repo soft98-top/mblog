@@ -8,6 +8,7 @@
     "index": "index.html",
     "post": "post.html",
     "archive": "archive.html",
-    "tags": "tags.html"
+    "tags": "tags.html",
+    "encrypted_post": "encrypted_post.html"
   }
 }

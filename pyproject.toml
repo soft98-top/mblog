@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/mblog"
-"Bug Reports" = "https://github.com/yourusername/mblog/issues"
-Source = "https://github.com/yourusername/mblog"
+Homepage = "https://github.com/soft98-top/mblog"
+"Bug Reports" = "https://github.com/soft98-top/mblog/issues"
+Source = "https://github.com/soft98-top/mblog"
 
 [project.scripts]
 mblog = "mblog.cli:main"
@@ -51,6 +51,7 @@ mblog = [
     "templates/project/*",
     "templates/runtime/*",
     "templates/themes/default/templates/*",
+    "templates/themes/default/templates/*.html",
     "templates/themes/default/static/css/*",
     "templates/themes/default/static/js/*",
     "templates/themes/default/*.json",
