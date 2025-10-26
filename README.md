@@ -23,7 +23,7 @@ pip install mblog
 ### 从源码安装
 
 ```bash
-git clone https://github.com/username/mblog.git
+git clone https://github.com/soft98-top/mblog.git
 cd mblog
 pip install -e .
 ```
