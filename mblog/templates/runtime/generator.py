@@ -92,15 +92,17 @@ class StaticGenerator:
         
         if not static_src or not Path(static_src).exists():
             print("  主题没有静态资源目录，跳过")
-            return
+        else:
+            static_dest = self.output_dir / 'static'
+            
+            try:
+                shutil.copytree(static_src, static_dest)
+                print(f"✓ 静态资源已复制: {static_src} -> {static_dest}")
+            except Exception as e:
+                raise GenerationError(f"复制静态资源失败: {e}")
         
-        static_dest = self.output_dir / 'static'
-        
-        try:
-            shutil.copytree(static_src, static_dest)
-            print(f"✓ 静态资源已复制: {static_src} -> {static_dest}")
-        except Exception as e:
-            raise GenerationError(f"复制静态资源失败: {e}")
+        # 复制文章中引用的图片
+        self._copy_post_images()
     
     def _generate_pages(self) -> None:
         """
@@ -269,6 +271,55 @@ class StaticGenerator:
                 f.write(content)
         except Exception as e:
             raise GenerationError(f"写入文件失败 {filepath}: {e}")
+    
+    def _copy_post_images(self) -> None:
+        """
+        复制文章中引用的图片到输出目录
+        
+        将所有文章中引用的相对路径图片复制到 assets/images 目录
+        """
+        images_dest = self.output_dir / 'assets' / 'images'
+        images_dest.mkdir(parents=True, exist_ok=True)
+        
+        copied_count = 0
+        
+        for post in self.posts:
+            if not post.images:
+                continue
+            
+            for img_path in post.images:
+                img_src = Path(img_path)
+                
+                if not img_src.exists():
+                    print(f"  警告: 图片不存在: {img_path}")
+                    continue
+                
+                # 获取图片相对于 md 目录的路径
+                try:
+                    # 假设 md_dir 是 'md'
+                    md_dir = Path(self.config.get('build.md_dir', 'md')).resolve()
+                    rel_path = img_src.relative_to(md_dir)
+                    
+                    # 目标路径
+                    img_dest = images_dest / rel_path
+                    
+                    # 确保目标目录存在
+                    img_dest.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # 复制文件
+                    shutil.copy2(img_src, img_dest)
+                    copied_count += 1
+                    
+                except ValueError:
+                    # 图片不在 md_dir 下，跳过
+                    print(f"  警告: 图片不在 md 目录下: {img_path}")
+                    continue
+                except Exception as e:
+                    print(f"  警告: 复制图片失败 {img_path}: {e}")
+                    continue
+        
+        if copied_count > 0:
+            print(f"✓ 文章图片已复制: {copied_count} 个文件")
     
     def _sanitize_filename(self, name: str) -> str:
         """

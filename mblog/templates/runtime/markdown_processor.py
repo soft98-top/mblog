@@ -28,6 +28,7 @@ class Post:
     encrypted: bool = False    # 是否加密
     password: str = ""         # 加密密码
     metadata: Dict[str, Any] = field(default_factory=dict)  # 其他元数据
+    images: List[str] = field(default_factory=list)  # 文章中引用的图片路径
 
 
 class MarkdownProcessor:
@@ -40,7 +41,7 @@ class MarkdownProcessor:
         Args:
             md_dir: Markdown 文件目录路径
         """
-        self.md_dir = Path(md_dir)
+        self.md_dir = Path(md_dir).resolve()
         self.md_converter = markdown.Markdown(
             extensions=[
                 'extra',           # 支持表格、代码块等扩展语法
@@ -125,8 +126,8 @@ class MarkdownProcessor:
         if isinstance(tags, str):
             tags = [tag.strip() for tag in tags.split(',')]
         
-        # 转换 Markdown 到 HTML
-        html = self._convert_to_html(content)
+        # 提取图片路径并转换 Markdown 到 HTML
+        images, html = self._process_markdown_with_images(content, filepath_obj)
         
         # 生成 slug
         slug = self._generate_slug(title, date)
@@ -152,7 +153,8 @@ class MarkdownProcessor:
             html=html,
             encrypted=encrypted,
             password=password,
-            metadata=metadata
+            metadata=metadata,
+            images=images
         )
         
         return post
@@ -279,3 +281,64 @@ class MarkdownProcessor:
         except ValueError:
             # 如果文件不在 md_dir 下，使用文件名（不含扩展名）
             return filepath.stem
+    
+    def _process_markdown_with_images(self, markdown_text: str, md_filepath: Path) -> Tuple[List[str], str]:
+        """
+        处理 Markdown 中的图片引用，提取图片路径并转换路径
+        
+        Args:
+            markdown_text: Markdown 文本
+            md_filepath: Markdown 文件的路径
+            
+        Returns:
+            (图片文件路径列表, 转换后的 HTML)
+        """
+        images = []
+        
+        # 查找所有图片引用: ![alt](path)
+        img_pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
+        
+        def replace_image(match):
+            alt_text = match.group(1)
+            img_path = match.group(2)
+            
+            # 跳过外部链接（http:// 或 https://）
+            if img_path.startswith(('http://', 'https://', '//')):
+                return match.group(0)
+            
+            # 跳过绝对路径
+            if img_path.startswith('/'):
+                return match.group(0)
+            
+            # 处理相对路径
+            # 解析图片的绝对路径
+            md_dir = md_filepath.parent
+            img_abs_path = (md_dir / img_path).resolve()
+            
+            # 检查图片文件是否存在
+            if img_abs_path.exists() and img_abs_path.is_file():
+                # 记录图片路径（相对于 md_dir 的父目录）
+                try:
+                    # 获取相对于 markdown 文件所在目录的路径
+                    rel_to_md = img_abs_path.relative_to(self.md_dir)
+                    images.append(str(img_abs_path))
+                    
+                    # 生成新的图片路径（在输出目录中的路径）
+                    # 格式: /assets/images/{relative_path}
+                    new_img_path = f'/assets/images/{rel_to_md}'
+                    
+                    return f'![{alt_text}]({new_img_path})'
+                except ValueError:
+                    # 图片不在 md_dir 下，保持原样
+                    pass
+            
+            # 如果图片不存在或无法处理，保持原样
+            return match.group(0)
+        
+        # 替换所有图片引用
+        processed_markdown = re.sub(img_pattern, replace_image, markdown_text)
+        
+        # 转换为 HTML
+        html = self._convert_to_html(processed_markdown)
+        
+        return images, html
