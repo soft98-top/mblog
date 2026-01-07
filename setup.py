@@ -21,7 +21,7 @@ with open(version_file, encoding="utf-8") as f:
 
 setup(
     name="mblog",
-    version=about.get("__version__", "0.1.0"),
+    version=about.get("__version__", "0.2.0"),
     author="mblog",
     author_email="",
     description="静态博客生成器脚手架工具",

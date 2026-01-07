@@ -5,7 +5,7 @@ mblog - 静态博客生成器脚手架工具
 主题系统和 GitHub Actions 自动部署。
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "mblog"
 __description__ = "静态博客生成器脚手架工具"
 

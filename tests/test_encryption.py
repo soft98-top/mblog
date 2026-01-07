@@ -130,16 +130,22 @@ This is an encrypted post.
         
         encrypted = renderer._encrypt_content(content, password)
         
-        # 验证加密结果格式
+        # 验证加密结果格式 (AES-GCM format: salt:nonce:ciphertext)
         self.assertIn(':', encrypted)
         parts = encrypted.split(':')
-        self.assertEqual(len(parts), 2)
+        self.assertEqual(len(parts), 3, "AES-GCM format should have 3 parts: salt:nonce:ciphertext")
         
-        # IV 和加密数据都应该是 base64 编码
+        # Salt, nonce, and ciphertext should all be valid base64
         import base64
         try:
-            base64.b64decode(parts[0])
-            base64.b64decode(parts[1])
+            salt = base64.b64decode(parts[0])
+            nonce = base64.b64decode(parts[1])
+            ciphertext = base64.b64decode(parts[2])
+            
+            # Verify sizes
+            self.assertEqual(len(salt), 16, "Salt should be 16 bytes")
+            self.assertEqual(len(nonce), 12, "Nonce should be 12 bytes")
+            self.assertGreater(len(ciphertext), 0, "Ciphertext should not be empty")
         except Exception as e:
             self.fail(f"加密结果不是有效的 base64: {e}")
     

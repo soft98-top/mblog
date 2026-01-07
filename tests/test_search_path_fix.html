@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索路径修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-case {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-case h3 {
+            margin-top: 0;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>搜索路径修复测试</h1>
+    <p>测试不同页面路径下的 search-index.json 路径计算</p>
+
+    <div id="test-results"></div>
+
+    <script>
+        // 模拟路径计算逻辑（新版本）
+        function calculateBasePath(currentPath) {
+            // 移除文件名，只保留目录路径
+            const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            
+            // 计算目录深度（根目录深度为0）
+            const depth = dirPath === '' ? 0 : dirPath.split('/').filter(p => p).length;
+            
+            // 根据深度生成相对路径
+            let basePath = '';
+            if (depth > 0) {
+                basePath = '../'.repeat(depth);
+            }
+            
+            return `${basePath}search-index.json`;
+        }
+
+        // 测试用例
+        const testCases = [
+            {
+                name: '首页',
+                path: '/',
+                expected: 'search-index.json'
+            },
+            {
+                name: '首页 (index.html)',
+                path: '/index.html',
+                expected: 'search-index.json'
+            },
+            {
+                name: '文章页面',
+                path: '/posts/2024-01-01-article.html',
+                expected: '../search-index.json'
+            },
+            {
+                name: '嵌套文章（中文目录）',
+                path: '/posts/杂项/多账户git配置.html',
+                expected: '../../search-index.json'
+            },
+            {
+                name: '标签页面',
+                path: '/tags/python.html',
+                expected: '../search-index.json'
+            },
+            {
+                name: '归档页面',
+                path: '/archive.html',
+                expected: 'search-index.json'
+            },
+            {
+                name: '分页页面',
+                path: '/page/2.html',
+                expected: '../search-index.json'
+            },
+            {
+                name: '深层嵌套文章',
+                path: '/posts/tech/python/tutorial.html',
+                expected: '../../../search-index.json'
+            },
+            {
+                name: '带基础路径的首页',
+                path: '/aaa/',
+                expected: '../search-index.json'
+            },
+            {
+                name: '带基础路径的文章',
+                path: '/aaa/posts/article.html',
+                expected: '../../search-index.json'
+            },
+            {
+                name: '带基础路径的深层文章',
+                path: '/aaa/posts/xx/xxx/xx.html',
+                expected: '../../../../search-index.json'
+            }
+        ];
+
+        // 运行测试
+        const resultsDiv = document.getElementById('test-results');
+        let passed = 0;
+        let failed = 0;
+
+        testCases.forEach(testCase => {
+            const result = calculateBasePath(testCase.path);
+            const isPass = result === testCase.expected;
+            
+            if (isPass) {
+                passed++;
+            } else {
+                failed++;
+            }
+
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-case';
+            testDiv.innerHTML = `
+                <h3>${testCase.name}</h3>
+                <p><strong>路径:</strong> ${testCase.path}</p>
+                <p><strong>期望:</strong> ${testCase.expected}</p>
+                <p><strong>实际:</strong> ${result}</p>
+                <div class="result ${isPass ? 'pass' : 'fail'}">
+                    ${isPass ? '✓ 通过' : '✗ 失败'}
+                </div>
+            `;
+            resultsDiv.appendChild(testDiv);
+        });
+
+        // 显示总结
+        const summary = document.createElement('div');
+        summary.style.cssText = 'margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 5px;';
+        summary.innerHTML = `
+            <h2>测试总结</h2>
+            <p><strong>通过:</strong> ${passed} / ${testCases.length}</p>
+            <p><strong>失败:</strong> ${failed} / ${testCases.length}</p>
+            <p><strong>成功率:</strong> ${Math.round(passed / testCases.length * 100)}%</p>
+        `;
+        resultsDiv.appendChild(summary);
+
+        console.log(`测试完成: ${passed} 通过, ${failed} 失败`);
+    </script>
+</body>
+</html>
